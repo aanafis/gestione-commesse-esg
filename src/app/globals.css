@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+/* Design tokens — palette validata dalla skill dataviz (references/palette.md).
+   Chiaro di default; scuro sia da preferenza di sistema sia da toggle esplicito. */
+:root {
+  --surface: #fcfcfb;
+  --page: #f9f9f7;
+  --ink-primary: #0b0b0b;
+  --ink-secondary: #52514e;
+  --ink-muted: #898781;
+  --gridline: #e1e0d9;
+  --border: rgba(11, 11, 11, 0.1);
+  --accent: #2a78d6;
+  --delta-good: #006300;
+
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-serious: #ec835a;
+  --status-critical: #d03b3b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --surface: #1a1a19;
+    --page: #0d0d0d;
+    --ink-primary: #ffffff;
+    --ink-secondary: #c3c2b7;
+    --ink-muted: #898781;
+    --gridline: #2c2c2a;
+    --border: rgba(255, 255, 255, 0.1);
+    --accent: #3987e5;
+    --delta-good: #0ca30c;
+  }
+}
+
+:root[data-theme="dark"] {
+  --surface: #1a1a19;
+  --page: #0d0d0d;
+  --ink-primary: #ffffff;
+  --ink-secondary: #c3c2b7;
+  --ink-muted: #898781;
+  --gridline: #2c2c2a;
+  --border: rgba(255, 255, 255, 0.1);
+  --accent: #3987e5;
+  --delta-good: #0ca30c;
+}
+
+@theme inline {
+  --color-surface: var(--surface);
+  --color-page: var(--page);
+  --color-ink-primary: var(--ink-primary);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-ink-muted: var(--ink-muted);
+  --color-gridline: var(--gridline);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-status-good: var(--status-good);
+  --color-status-warning: var(--status-warning);
+  --color-status-serious: var(--status-serious);
+  --color-status-critical: var(--status-critical);
+}
+
+body {
+  background: var(--page);
+  color: var(--ink-primary);
+  font-family:
+    system-ui, -apple-system, "Segoe UI", sans-serif;
+}
