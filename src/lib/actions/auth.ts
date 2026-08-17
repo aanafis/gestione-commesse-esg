@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/session";
+import { sendMagicLinkEmail } from "@/lib/email";
 
 // Magic link (§7). Whitelist implicita: solo le email già presenti in
 // Person (persone attive) ricevono un link — non esiste un modulo di
@@ -15,13 +16,31 @@ const TOKEN_TTL_MINUTES = 15;
 export type MagicLinkFormState = {
   status: "idle" | "error" | "sent";
   error?: string;
-  /** Solo in AUTH_DEV_MODE: nessun provider email collegato ancora
-   *  (step 5 - deployment). Il link va mostrato a schermo invece che spedito. */
+  /** Solo in AUTH_DEV_MODE: nessun'email viene davvero inviata, il link
+   *  compare a schermo — utile in sviluppo locale. */
   devLoginUrl?: string;
 };
 
 function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
+}
+
+/**
+ * URL assoluto dell'app, in ordine di preferenza:
+ * 1. APP_URL — esplicito, per un dominio personalizzato
+ * 2. VERCEL_PROJECT_PRODUCTION_URL — il dominio di produzione stabile che
+ *    Vercel imposta da solo (non cambia ad ogni deploy, a differenza di
+ *    VERCEL_URL)
+ * 3. VERCEL_URL — fallback per i deploy di anteprima
+ * 4. localhost — sviluppo locale
+ */
+function getAppUrl(): string {
+  if (process.env.APP_URL) return process.env.APP_URL;
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
 }
 
 export async function requestMagicLink(
@@ -35,7 +54,7 @@ export async function requestMagicLink(
 
   const person = await db
     .selectFrom("person")
-    .select(["id", "active"])
+    .select(["id", "name", "active"])
     .where("email", "=", email)
     .executeTakeFirst();
 
@@ -53,14 +72,22 @@ export async function requestMagicLink(
     .values({ personId: person.id, tokenHash: hashToken(token), expiresAt })
     .execute();
 
-  const devLoginUrl = `/auth/verify?token=${token}`;
+  const loginPath = `/auth/verify?token=${token}`;
 
   if (process.env.AUTH_DEV_MODE === "true") {
-    return { status: "sent", devLoginUrl };
+    return { status: "sent", devLoginUrl: loginPath };
   }
 
-  // TODO(step 5 - deployment): collegare un vero invio email (Resend/SMTP)
-  // e costruire un URL assoluto (qui serve il dominio pubblico dell'app).
+  try {
+    await sendMagicLinkEmail({ to: email, name: person.name, url: `${getAppUrl()}${loginPath}` });
+  } catch (err) {
+    console.error("Invio magic link fallito:", err);
+    return {
+      status: "error",
+      error: "Non sono riuscito a inviare l'email. Riprova tra poco o avvisa l'amministratore.",
+    };
+  }
+
   return { status: "sent" };
 }
 
