@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth/dal";
 
@@ -105,4 +106,54 @@ export async function updatePhaseProgress(
       values,
     };
   }
+}
+
+// Modifica rapida dell'avanzamento direttamente dalla tabella Fasi nella
+// scheda servizio — non passa dalla maschera completa "Aggiorna avanzamento"
+// (§6.5), scrive SOLO progress_pct: a differenza di updatePhaseProgress qui
+// sopra, non tocca responsabile/date, altrimenti li azzererebbe ogni volta
+// (quella action li sovrascrive sempre con quello che il form invia — va
+// bene lì perché il form li rimanda tutti insieme, non andrebbe bene qui).
+// phaseId è "bind"-ato dal componente (un form per riga di tabella, §6.5.1
+// pattern already used elsewhere per azioni per-riga), quindi arriva come
+// primo argomento, non da formData.
+
+export type PhasePercentFormState = {
+  status: "idle" | "error" | "success";
+  error?: string;
+};
+
+export async function updatePhasePercent(
+  phaseId: string,
+  _prevState: PhasePercentFormState,
+  formData: FormData
+): Promise<PhasePercentFormState> {
+  const session = await getSession();
+  if (!session) {
+    return { status: "error", error: "Sessione scaduta — accedi di nuovo." };
+  }
+
+  const raw = String(formData.get("progressPct") ?? "");
+  const pct = Number(raw.replace(",", "."));
+  if (raw === "" || Number.isNaN(pct) || pct < 0 || pct > 100) {
+    return { status: "error", error: "Valore tra 0 e 100." };
+  }
+
+  const phase = await db
+    .selectFrom("phase")
+    .select(["id", "serviceId"])
+    .where("id", "=", phaseId)
+    .executeTakeFirst();
+  if (!phase) {
+    return { status: "error", error: "Fase non trovata." };
+  }
+
+  await db
+    .updateTable("phase")
+    .set({ progressPct: (pct / 100).toFixed(4), updatedBy: session.personId })
+    .where("id", "=", phaseId)
+    .execute();
+
+  revalidatePath(`/servizi/${phase.serviceId}`);
+  return { status: "success" };
 }

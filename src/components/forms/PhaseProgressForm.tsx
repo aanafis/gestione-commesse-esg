@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { updatePhaseProgress, type PhaseFormState } from "@/lib/actions/phase";
 import { Field, Select, TextInput } from "@/components/forms/Field";
@@ -41,6 +42,44 @@ export function PhaseProgressForm({
   people: { id: string; name: string }[];
   initialServiceId?: string;
 }) {
+  // Chiave di remount: "Aggiorna un'altra fase" (sotto) deve rimettere la
+  // maschera a nuovo. Qui l'URL di destinazione CAMBIA davvero (perde
+  // ?serviceId=X), ma non basta: React non rimonta questo componente solo
+  // perché i props sono cambiati (stessa posizione nell'albero), quindi lo
+  // stato di useActionState restava "success" per sempre — il click sembrava
+  // non fare nulla, bug reale riscontrato dall'utente. Stessa causa di fondo
+  // già vista su AssignmentForm/CommessaForm/ServiceForm, manifestata diversamente.
+  const [instance, setInstance] = useState({ key: 0, serviceId: initialServiceId });
+  const router = useRouter();
+
+  return (
+    <PhaseProgressFormInner
+      key={instance.key}
+      phases={phases}
+      people={people}
+      initialServiceId={instance.serviceId}
+      onUpdateAnother={(serviceId) => {
+        // router.refresh() rilegge le fasi dal server (la percentuale appena
+        // salvata), altrimenti il prossimo giro userebbe ancora i vecchi
+        // valori se si riseleziona la stessa fase.
+        router.refresh();
+        setInstance((i) => ({ key: i.key + 1, serviceId }));
+      }}
+    />
+  );
+}
+
+function PhaseProgressFormInner({
+  phases,
+  people,
+  initialServiceId,
+  onUpdateAnother,
+}: {
+  phases: PhaseOption[];
+  people: { id: string; name: string }[];
+  initialServiceId?: string;
+  onUpdateAnother: (serviceId: string) => void;
+}) {
   const [state, formAction, pending] = useActionState(updatePhaseProgress, INITIAL_STATE);
 
   const services = Array.from(
@@ -63,9 +102,13 @@ export function PhaseProgressForm({
           <Link href={`/servizi/${state.updatedServiceId}`} className="text-sm text-accent hover:underline">
             Vai alla scheda servizio
           </Link>
-          <Link href="/fasi/aggiorna" className="text-sm text-ink-secondary hover:underline">
+          <button
+            type="button"
+            onClick={() => onUpdateAnother(state.updatedServiceId!)}
+            className="text-sm text-ink-secondary hover:underline"
+          >
             Aggiorna un&apos;altra fase
-          </Link>
+          </button>
         </div>
       </div>
     );

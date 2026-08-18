@@ -5,6 +5,7 @@ import { Breakdown, BreakdownRow, Card } from "@/components/Breakdown";
 import { StatTile } from "@/components/StatTile";
 import { Tabs } from "@/components/Tabs";
 import { DataTable } from "@/components/DataTable";
+import { PhaseProgressInlineForm } from "@/components/forms/PhaseProgressInlineForm";
 import {
   getAssignments,
   getForecasts,
@@ -260,7 +261,17 @@ export default async function ServiceDetailPage(props: PageProps<"/servizi/[id]"
                     { key: "baselineDate", label: "Baseline", render: (r) => formatDate(r.baselineDate) },
                     { key: "plannedDate", label: "Pianificata", render: (r) => formatDate(r.plannedDate) },
                     { key: "actualDate", label: "Effettiva", render: (r) => formatDate(r.actualDate) },
-                    { key: "progressPct", label: "Avanzamento", align: "right", render: (r) => formatPercent(r.progressPct) },
+                    {
+                      key: "progressPct",
+                      label: "Avanzamento",
+                      align: "right",
+                      render: (r) => (
+                        <PhaseProgressInlineForm
+                          phaseId={String(r.phaseId)}
+                          initialPct={Math.round(Number(r.progressPct) * 100)}
+                        />
+                      ),
+                    },
                     { key: "daysLate", label: "Giorni di ritardo", align: "right", render: (r) => r.daysLate ?? "–" },
                     { key: "indicativeHours", label: "Ore indicative", align: "right", render: (r) => formatHours(r.indicativeHours) },
                   ]}
