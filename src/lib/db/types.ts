@@ -222,6 +222,7 @@ export interface PurchaseOrderLine {
   consultantCost: Generated<Numeric>;
   createdAt: Generated<Timestamp>;
   createdBy: Int8 | null;
+  description: string | null;
   id: Generated<Int8>;
   invoicedAmount: Generated<Numeric>;
   phaseRef: string | null;
@@ -443,6 +444,7 @@ export interface VPhaseStatus {
 
 export interface VPurchaseOrderLineMetrics {
   consultantCost: Numeric | null;
+  description: string | null;
   invoicedAmount: Numeric | null;
   isCommitted: boolean | null;
   lineId: Int8 | null;

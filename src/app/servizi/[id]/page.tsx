@@ -304,6 +304,7 @@ export default async function ServiceDetailPage(props: PageProps<"/servizi/[id]"
                   emptyLabel="Nessun ordine di acquisto su questo servizio."
                   columns={[
                     { key: "number", label: "N. ordine" },
+                    { key: "description", label: "Prestazione", render: (r) => r.description ?? "–" },
                     { key: "supplierName", label: "Fornitore" },
                     { key: "poStatus", label: "Stato", render: (r) => label(PO_STATUS_LABELS, r.poStatus) },
                     { key: "consultantCost", label: "Costo consulente", align: "right", render: (r) => formatMoney(r.consultantCost) },

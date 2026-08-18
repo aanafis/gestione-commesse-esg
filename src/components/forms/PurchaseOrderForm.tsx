@@ -14,7 +14,7 @@ import { APPROVAL_LEVEL_LABELS, PO_STATUS_LABELS } from "@/lib/labels";
 const INITIAL_STATE: PurchaseOrderFormState = { status: "idle" };
 
 function emptyLine(serviceId = ""): PurchaseOrderLineInput {
-  return { serviceId, phaseRef: "", consultantCost: "", rechargedToClient: "0", invoicedAmount: "0" };
+  return { serviceId, phaseRef: "", description: "", consultantCost: "", rechargedToClient: "0", invoicedAmount: "0" };
 }
 
 export function PurchaseOrderForm({
@@ -199,6 +199,14 @@ export function PurchaseOrderForm({
                     </option>
                   ))}
                 </Select>
+              </Field>
+
+              <Field label="Descrizione prestazione" htmlFor={`line-${i}-description`} error={e.description} hint="Facoltativa — es. 'Certificazione LEED', utile quando un ordine copre più servizi">
+                <TextInput
+                  id={`line-${i}-description`}
+                  value={line.description}
+                  onChange={(ev) => updateLine(i, { description: ev.target.value })}
+                />
               </Field>
 
               <Field label="Riferimento fase" htmlFor={`line-${i}-phaseRef`} error={e.phaseRef} hint="Testo libero, facoltativo">

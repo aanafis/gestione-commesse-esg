@@ -51,6 +51,17 @@ applicarli una volta in ordine è sufficiente.
 - **`GRESB`**: omesso perché non presente nel file Excel reale né mai
   usato. Va aggiunto a `service_type` (e il suo template fasi) quando serve.
 
+## Migrazione dalla commessa pilota (§9)
+
+`db/import-pilot-commessa-26-017.js` importa la commessa reale 26-017 (Adyen)
+dal file Excel — solo dati grezzi (mai colonne calcolate). Verificato prima
+di eseguirlo: margine a finire, costo totale a finire, margine consulenti,
+ore EAC e l'alert di entrambi i servizi, ricalcolati dai dati grezzi con le
+formule del §5, coincidono **esattamente** con l'Excel (il markup mostrato
+come "1,55x" è in realtà 1.554 preciso). Una fase aveva una data effettiva
+che sembrava un segnaposto (coincideva esattamente con la fine servizio
+nonostante avanzamento 50%) — lasciata `NULL` su decisione dell'utente.
+
 ## Decisioni prese (per non doverle rimettere in discussione)
 
 - Tariffe congelate (snapshot) su `assignment.cost_rate_snapshot` /

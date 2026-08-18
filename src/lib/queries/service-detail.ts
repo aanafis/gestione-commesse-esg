@@ -119,6 +119,7 @@ export function getPurchaseOrderLines(id: string) {
       "s.name as supplierName",
       "po.status as poStatus",
       "l.phaseRef",
+      "l.description",
       "l.consultantCost",
       "l.rechargedToClient",
       "l.invoicedAmount",

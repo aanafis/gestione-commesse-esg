@@ -14,6 +14,7 @@ import { getSession } from "@/lib/auth/dal";
 export type PurchaseOrderLineInput = {
   serviceId: string;
   phaseRef: string;
+  description: string;
   consultantCost: string;
   rechargedToClient: string;
   invoicedAmount: string;
@@ -153,6 +154,7 @@ export async function createPurchaseOrder(
             purchaseOrderId: po.id,
             serviceId: line.serviceId,
             phaseRef: line.phaseRef || null,
+            description: line.description || null,
             consultantCost: parseMoney(line.consultantCost).toFixed(2),
             rechargedToClient: parseMoney(line.rechargedToClient || "0").toFixed(2),
             invoicedAmount: parseMoney(line.invoicedAmount || "0").toFixed(2),
