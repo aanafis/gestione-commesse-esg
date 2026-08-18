@@ -33,7 +33,7 @@ npx kysely-codegen --url "$env:DATABASE_URL" --out-file "src\lib\db\types.ts" --
 
 - [x] 1. Schema database + migration + seed
 - [x] 2. Schermate di sola lettura — **Cruscotto** (`/`), **Servizi** (`/servizi`), **Scheda servizio** (`/servizi/[id]`), **Controllo ore** (`/controllo-ore`)
-- [x] 3. Maschere di inserimento dati — tutte fatte: Nuova commessa, Nuovo servizio, Assegna risorsa, Nuovo ODA, Aggiorna avanzamento fase, Previsione trimestrale, **Import ore da CSV** (`/ore/importa`, mappatura colonne + anteprima + upsert)
+- [x] 3. Maschere di inserimento dati — tutte fatte: Nuova commessa, Nuovo servizio, Assegna risorsa, Nuovo ODA, Aggiorna avanzamento fase, Previsione trimestrale, **Import ore da CSV** (`/ore/importa`, mappatura colonne + anteprima + upsert), **Registra ore** (`/ore/nuova`, singola riga a mano — upsert su servizio+persona+mese solo tra righe manuali, non tocca mai le righe da import)
 - [x] 4. Autenticazione — magic link (`/login`), sessione JWT nel cookie, `created_by`/`updated_by`/`recorded_by_id` ora valorizzati su tutte le maschere
 - [x] 5. Deployment — **https://gestione-commesse-esg.vercel.app**, GitHub → Vercel collegati (push su `main` pubblica da solo)
 - [x] Migrazione commessa pilota 26-017 (Adyen) — vedi `db/import-pilot-commessa-26-017.js`, riconciliazione con l'Excel confermata su margine, ore EAC e alert di entrambi i servizi

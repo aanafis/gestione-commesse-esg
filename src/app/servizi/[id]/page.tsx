@@ -344,7 +344,16 @@ export default async function ServiceDetailPage(props: PageProps<"/servizi/[id]"
             label: "Ore",
             count: timeEntries.length,
             content: (
-              <DataTable
+              <div className="flex flex-col gap-3">
+                <div>
+                  <Link
+                    href={`/ore/nuova?serviceId=${id}`}
+                    className="inline-block rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white"
+                  >
+                    + Registra ore
+                  </Link>
+                </div>
+                <DataTable
                 rows={timeEntries}
                 getRowKey={(r) => r.id}
                 emptyLabel="Nessuna ora registrata."
@@ -355,7 +364,8 @@ export default async function ServiceDetailPage(props: PageProps<"/servizi/[id]"
                   { key: "hours", label: "Ore", align: "right", render: (r) => formatHours(r.hours) },
                   { key: "source", label: "Origine", render: (r) => label(TIME_ENTRY_SOURCE_LABELS, r.source) },
                 ]}
-              />
+                />
+              </div>
             ),
           },
           {
