@@ -36,6 +36,31 @@ export async function getServicesForAssignmentForm() {
   }));
 }
 
+/** Valori grezzi per precompilare la maschera di modifica assegnazione.
+ * Persona e servizio non sono modificabili da qui — sono l'identità della
+ * riga (vincolo di unicità service_id+person_id): cambiarli significherebbe
+ * creare un'assegnazione diversa, non modificare questa. */
+export function getAssignmentForEdit(id: string) {
+  return db
+    .selectFrom("assignment as a")
+    .innerJoin("service as s", "s.id", "a.serviceId")
+    .innerJoin("commessa as c", "c.id", "s.commessaId")
+    .innerJoin("person as p", "p.id", "a.personId")
+    .innerJoin("level as l", "l.id", "p.levelId")
+    .select([
+      "a.id",
+      "a.serviceId",
+      "s.code as serviceCode",
+      "c.code as commessaCode",
+      "p.name as personName",
+      "l.name as levelName",
+      "a.projectRole",
+      "a.estimatedHours",
+    ])
+    .where("a.id", "=", id)
+    .executeTakeFirst();
+}
+
 export function getPeopleWithRates() {
   return db
     .selectFrom("person as p")

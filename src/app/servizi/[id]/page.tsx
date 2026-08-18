@@ -223,6 +223,15 @@ export default async function ServiceDetailPage(props: PageProps<"/servizi/[id]"
                   { key: "variance", label: "Scostamento", align: "right", render: (r) => formatHours(r.variance) },
                   { key: "consumedPct", label: "Consumate %", align: "right", render: (r) => formatPercent(r.consumedPct) },
                   { key: "alert", label: "Alert", render: (r) => <AlertChip alert={r.alert} /> },
+                  {
+                    key: "actions",
+                    label: "",
+                    render: (r) => (
+                      <Link href={`/assegnazioni/${r.assignmentId}/modifica`} className="text-accent hover:underline">
+                        Modifica
+                      </Link>
+                    ),
+                  },
                 ]}
                 />
               </div>

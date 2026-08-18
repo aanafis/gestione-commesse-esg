@@ -119,3 +119,77 @@ export async function createAssignment(
     };
   }
 }
+
+// Modifica di un'assegnazione già esistente. Persona e servizio non si
+// toccano da qui — sono l'identità della riga (vincolo di unicità
+// service_id+person_id). Le tariffe snapshot (costo/venduta) restano quelle
+// del momento della creazione, per decisione già presa (§4.1) — modificare
+// le ore non deve far scivolare anche la tariffa usata per i calcoli.
+
+export type AssignmentEditFormValues = {
+  id: string;
+  projectRole: string;
+  estimatedHours: string;
+};
+
+export type AssignmentEditFormState = {
+  status: "idle" | "error" | "success";
+  errors?: Partial<Record<keyof AssignmentEditFormValues | "_form", string>>;
+  values?: AssignmentEditFormValues;
+  serviceId?: string;
+};
+
+export async function updateAssignment(
+  _prevState: AssignmentEditFormState,
+  formData: FormData
+): Promise<AssignmentEditFormState> {
+  const session = await getSession();
+  if (!session) {
+    return { status: "error", errors: { _form: "Sessione scaduta — accedi di nuovo." } };
+  }
+
+  const values: AssignmentEditFormValues = {
+    id: String(formData.get("id") ?? ""),
+    projectRole: String(formData.get("projectRole") ?? ""),
+    estimatedHours: String(formData.get("estimatedHours") ?? ""),
+  };
+
+  const errors: AssignmentEditFormState["errors"] = {};
+
+  if (!values.id) errors._form = "Assegnazione non specificata.";
+  if (!isProjectRole(values.projectRole)) errors.projectRole = "Seleziona un ruolo.";
+
+  const estimatedHours = Number(values.estimatedHours.replace(",", "."));
+  if (values.estimatedHours === "" || Number.isNaN(estimatedHours) || estimatedHours < 0) {
+    errors.estimatedHours = "Inserisci un numero di ore valido (0 o superiore).";
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return { status: "error", errors, values };
+  }
+
+  try {
+    const updated = await db
+      .updateTable("assignment")
+      .set({
+        projectRole: values.projectRole as ProjectRole,
+        estimatedHours: estimatedHours.toFixed(2),
+        updatedBy: session.personId,
+      })
+      .where("id", "=", values.id)
+      .returning(["serviceId"])
+      .executeTakeFirst();
+
+    if (!updated) {
+      return { status: "error", errors: { _form: "Assegnazione non trovata." }, values };
+    }
+
+    return { status: "success", serviceId: updated.serviceId };
+  } catch {
+    return {
+      status: "error",
+      errors: { _form: "Errore imprevisto durante il salvataggio. Riprova." },
+      values,
+    };
+  }
+}
