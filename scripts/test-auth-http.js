@@ -15,7 +15,7 @@ const { Client } = require("pg");
 const crypto = require("crypto");
 
 const BASE_URL = process.env.BASE_URL ?? "http://localhost:3000";
-const EMAIL = process.argv[2] ?? "aanfi@ilprisma.com";
+const EMAIL = process.argv[2] ?? "aanafi@ilprisma.com";
 
 function hashToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");

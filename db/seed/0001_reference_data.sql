@@ -1,25 +1,27 @@
 -- 0001_reference_data.sql
--- Dati di riferimento reali (persone, fornitori) + valori d'esempio da
--- sostituire (tariffe) + impostazioni di default.
+-- Dati di riferimento reali (persone, fornitori, tariffe) + impostazioni di
+-- default.
 --
--- Tariffe (Level): valori d'esempio dalla spec §4.1, differenziati per
--- livello — decisione confermata con l'utente, al posto dei valori
--- attualmente identici (38,00 € / 61,88 € per tutti) presenti nel file
--- Excel oggi, che sembrano un placeholder mai completato.
--- DA FARE: sostituire con le tariffe reali del listino.
+-- Tariffe (Level): listino reale confermato con l'utente il 2026-08-18 —
+-- 38,00 € (interno) / 61,88 € (esterno), identico per tutti e 4 i livelli.
+-- In una fase precedente questo stesso valore uguale-per-tutti, presente nel
+-- file Excel, era stato scartato come placeholder mai completato e sostituito
+-- con valori d'esempio differenziati per livello (spec §4.1); l'utente ha
+-- poi confermato esplicitamente che il listino reale è davvero uguale per
+-- tutti i livelli.
 
 BEGIN;
 
 INSERT INTO level (name, internal_cost_rate, sold_rate) VALUES
-  ('Head of ESG', 45.00, 85.00),
+  ('Head of ESG', 38.00, 61.88),
   ('Senior',       38.00, 61.88),
-  ('Consulente',   34.00, 61.88),
-  ('Junior',       27.00, 48.00);
+  ('Consulente',   38.00, 61.88),
+  ('Junior',       38.00, 61.88);
 
 -- Persone reali del team (foglio TEAM). Ore annue disponibili come da file.
 -- Amit Anafi = admin (Head of ESG / BU director), gli altri = member.
 INSERT INTO person (name, email, level_id, annual_available_hours, role) VALUES
-  ('Amit Anafi',           'aanfi@ilprisma.com',    (SELECT id FROM level WHERE name = 'Head of ESG'), 1440, 'admin'),
+  ('Amit Anafi',           'aanafi@ilprisma.com',   (SELECT id FROM level WHERE name = 'Head of ESG'), 1440, 'admin'),
   ('Giulia Dagradi',       'gdagradi@ilprisma.com', (SELECT id FROM level WHERE name = 'Senior'),       1600, 'member'),
   ('Anna Vadacca',         'avadacca@ilprisma.com', (SELECT id FROM level WHERE name = 'Senior'),       1600, 'member'),
   ('Giovanni Della Valle', 'gdvalle@ilprisma.com',  (SELECT id FROM level WHERE name = 'Senior'),       1600, 'member');

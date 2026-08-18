@@ -71,6 +71,22 @@ export function formatDate(v: Date | string | null | undefined): string {
   return Number.isNaN(d.getTime()) ? "–" : dateFmt.format(d);
 }
 
+/**
+ * Converte una DATE del database nel formato "YYYY-MM-DD" richiesto dal
+ * value di <input type="date">. Stessa regola delle altre funzioni qui
+ * sopra: metodi getUTC*, mai quelli locali — altrimenti il valore mostrato
+ * nel form può scivolare di un giorno a seconda del fuso del browser.
+ */
+export function toDateInputValue(v: Date | string | null | undefined): string {
+  if (!v) return "";
+  const d = typeof v === "string" ? new Date(v) : v;
+  if (Number.isNaN(d.getTime())) return "";
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 const monthLabelFmt = new Intl.DateTimeFormat("it-IT", { month: "short", timeZone: "UTC" });
 
 /** "2026-07" → "lug 26" */

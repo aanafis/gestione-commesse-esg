@@ -68,6 +68,9 @@ export default async function ServiceDetailPage(props: PageProps<"/servizi/[id]"
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-semibold text-ink-primary">{header.code}</h1>
           {alert && <AlertChip alert={alert.alert} />}
+          <Link href={`/servizi/${id}/modifica`} className="text-sm text-accent hover:underline">
+            Modifica
+          </Link>
         </div>
         <p className="text-sm text-ink-secondary">
           {header.serviceTypeName}

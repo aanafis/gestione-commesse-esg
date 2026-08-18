@@ -213,3 +213,110 @@ export async function createService(
     };
   }
 }
+
+// Modifica di un servizio già esistente. Commessa e codice sono l'identità
+// del servizio — non si toccano da qui (ricreare code univoci e riferimenti
+// incrociati con ODA/SAL/fasi non è nello scopo di questa maschera). Niente
+// rigenerazione fasi dal template: quella è un'azione una tantum alla
+// creazione (§4.2) — le fasi si aggiornano da "Aggiorna avanzamento".
+
+export type ServiceEditFormValues = {
+  id: string;
+  serviceTypeId: string;
+  variant: string;
+  pmId: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  consultantCostBudget: string;
+  markup: string;
+  contractedPrice: string;
+};
+
+export type ServiceEditFormState = {
+  status: "idle" | "error" | "success";
+  errors?: Partial<Record<keyof ServiceEditFormValues | "_form", string>>;
+  values?: ServiceEditFormValues;
+};
+
+export async function updateService(
+  _prevState: ServiceEditFormState,
+  formData: FormData
+): Promise<ServiceEditFormState> {
+  const session = await getSession();
+  if (!session) {
+    return { status: "error", errors: { _form: "Sessione scaduta — accedi di nuovo." } };
+  }
+
+  const values: ServiceEditFormValues = {
+    id: String(formData.get("id") ?? ""),
+    serviceTypeId: String(formData.get("serviceTypeId") ?? ""),
+    variant: String(formData.get("variant") ?? "").trim(),
+    pmId: String(formData.get("pmId") ?? ""),
+    startDate: String(formData.get("startDate") ?? ""),
+    endDate: String(formData.get("endDate") ?? ""),
+    status: String(formData.get("status") ?? "active"),
+    consultantCostBudget: String(formData.get("consultantCostBudget") ?? ""),
+    markup: String(formData.get("markup") ?? ""),
+    contractedPrice: String(formData.get("contractedPrice") ?? ""),
+  };
+
+  const errors: ServiceEditFormState["errors"] = {};
+
+  if (!values.id) errors._form = "Servizio non specificato.";
+  if (!values.serviceTypeId) errors.serviceTypeId = "Seleziona un tipo di servizio.";
+
+  const consultantCostBudget = parseMoney(values.consultantCostBudget || "0");
+  if (values.consultantCostBudget !== "" && (Number.isNaN(consultantCostBudget) || consultantCostBudget < 0)) {
+    errors.consultantCostBudget = "Inserisci un importo valido (0 o superiore).";
+  }
+
+  const markup = parseMoney(values.markup || "");
+  if (values.markup === "" || Number.isNaN(markup) || markup <= 0) {
+    errors.markup = "Inserisci un moltiplicatore valido (es. 1.30 = costo +30%).";
+  }
+
+  const contractedPrice = parseMoney(values.contractedPrice || "");
+  if (values.contractedPrice === "" || Number.isNaN(contractedPrice) || contractedPrice < 0) {
+    errors.contractedPrice = "Inserisci un importo valido (0 o superiore).";
+  }
+
+  if (!isServiceStatus(values.status)) {
+    errors.status = "Stato non valido.";
+  }
+
+  if (values.startDate && values.endDate && values.endDate < values.startDate) {
+    errors.endDate = "La fine prevista non può precedere la data di avvio.";
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return { status: "error", errors, values };
+  }
+
+  try {
+    await db
+      .updateTable("service")
+      .set({
+        serviceTypeId: values.serviceTypeId,
+        variant: values.variant || null,
+        pmId: values.pmId || null,
+        startDate: values.startDate || null,
+        endDate: values.endDate || null,
+        status: values.status as ServiceStatus,
+        consultantCostBudget: consultantCostBudget.toFixed(2),
+        markup: markup.toFixed(4),
+        contractedPrice: contractedPrice.toFixed(2),
+        updatedBy: session.personId,
+      })
+      .where("id", "=", values.id)
+      .execute();
+
+    return { status: "success" };
+  } catch {
+    return {
+      status: "error",
+      errors: { _form: "Errore imprevisto durante il salvataggio. Riprova." },
+      values,
+    };
+  }
+}

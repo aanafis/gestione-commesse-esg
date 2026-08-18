@@ -65,3 +65,30 @@ export async function getDefaultMarkup(): Promise<string> {
   const settings = await db.selectFrom("settings").select("defaultMarkup").executeTakeFirst();
   return settings?.defaultMarkup ?? "1.30";
 }
+
+/**
+ * Valori grezzi del servizio per precompilare la maschera di modifica.
+ * Commessa e codice non sono qui: sono l'identità del servizio, non si
+ * modificano da questa maschera (vedi ServiceEditForm).
+ */
+export function getServiceForEdit(id: string) {
+  return db
+    .selectFrom("service as s")
+    .innerJoin("commessa as c", "c.id", "s.commessaId")
+    .select([
+      "s.id",
+      "s.code",
+      "c.code as commessaCode",
+      "s.serviceTypeId",
+      "s.variant",
+      "s.pmId",
+      "s.startDate",
+      "s.endDate",
+      "s.status",
+      "s.consultantCostBudget",
+      "s.markup",
+      "s.contractedPrice",
+    ])
+    .where("s.id", "=", id)
+    .executeTakeFirst();
+}

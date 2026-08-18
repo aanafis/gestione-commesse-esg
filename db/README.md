@@ -38,10 +38,6 @@ applicarli una volta in ordine è sufficiente.
 
 ## Punti da rivedere prima di andare oltre il pilota
 
-- **Tariffe (`level`)**: seminate con i valori d'esempio della spec
-  (Head of ESG 45/85, Senior 38/61,88, Consulente 34/61,88, Junior 27/48).
-  Il file Excel oggi ha valori identici per tutti — un placeholder mai
-  completato. Da sostituire con le tariffe reali del listino appena decise.
 - **P.IVA fornitori**: `FOR-001` e `FOR-002` hanno P.IVA a 10 cifre invece di
   11 nel file Excel originale (probabile zero iniziale perso perché la
   colonna era formattata come numero). Riportati così come sono; da
@@ -64,6 +60,11 @@ nonostante avanzamento 50%) — lasciata `NULL` su decisione dell'utente.
 
 ## Decisioni prese (per non doverle rimettere in discussione)
 
+- **Tariffe (`level`)**: listino reale confermato dall'utente il 2026-08-18 —
+  38,00 € (interno) / 61,88 € (esterno), **identico per tutti i 4 livelli**.
+  Sostituisce i valori d'esempio differenziati per livello seminati in una
+  fase precedente (spec §4.1); l'utente ha confermato esplicitamente che il
+  valore uguale-per-tutti presente nel file Excel non era un placeholder.
 - Tariffe congelate (snapshot) su `assignment.cost_rate_snapshot` /
   `sold_rate_snapshot` e `time_entry.cost_rate_snapshot` al momento della
   creazione della riga: un cambio tariffa sul Livello non altera più la
