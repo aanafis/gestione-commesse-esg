@@ -89,6 +89,7 @@ export function ServiceListTable({ rows }: { rows: ServiceListRow[] }) {
               <th className="px-4 py-2 font-medium">Commessa</th>
               <th className="px-4 py-2 font-medium">Cliente</th>
               <th className="px-4 py-2 font-medium">Tipo</th>
+              <th className="px-4 py-2 font-medium">Variante</th>
               <th className="px-4 py-2 font-medium">PM</th>
               <th className="px-4 py-2 font-medium">Stato</th>
               <th className="px-4 py-2 font-medium">Alert</th>
@@ -116,7 +117,7 @@ export function ServiceListTable({ rows }: { rows: ServiceListRow[] }) {
           <tbody className="[font-variant-numeric:tabular-nums]">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={11} className="px-4 py-6 text-center text-sm text-ink-muted">
+                <td colSpan={12} className="px-4 py-6 text-center text-sm text-ink-muted">
                   Nessun servizio corrisponde ai filtri scelti.
                 </td>
               </tr>
@@ -131,6 +132,7 @@ export function ServiceListTable({ rows }: { rows: ServiceListRow[] }) {
                   <td className="px-4 py-2 text-ink-secondary">{r.commessaCode}</td>
                   <td className="px-4 py-2 text-ink-secondary">{r.clientName}</td>
                   <td className="px-4 py-2 text-ink-secondary">{r.serviceTypeName}</td>
+                  <td className="px-4 py-2 text-ink-secondary">{r.variant ?? "–"}</td>
                   <td className="px-4 py-2 text-ink-secondary">{r.pmName ?? "–"}</td>
                   <td className="px-4 py-2 text-ink-secondary">{label(SERVICE_STATUS_LABELS, r.status)}</td>
                   <td className="px-4 py-2">
