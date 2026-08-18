@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createAssignment, type AssignmentFormState } from "@/lib/actions/assignment";
 import { Field, Select, TextInput } from "@/components/forms/Field";
@@ -36,6 +37,43 @@ export function AssignmentForm({
   services: ServiceOption[];
   people: PersonOption[];
   initialServiceId?: string;
+}) {
+  // Chiave di remount: "Assegna un'altra risorsa" (sotto) deve rimettere la
+  // maschera a nuovo per lo stesso servizio. Un <Link> verso l'URL su cui ci
+  // si trova già (tipico: si arriva qui da /assegnazioni/nuova?serviceId=X e
+  // il servizio non cambia) non naviga — nessun effetto al click, bug reale
+  // riscontrato dall'utente. Il remount via key bypassa del tutto la
+  // questione URL: funziona sia che l'URL cambi sia che resti identico.
+  const [instance, setInstance] = useState({ key: 0, serviceId: initialServiceId });
+  const router = useRouter();
+
+  return (
+    <AssignmentFormInner
+      key={instance.key}
+      services={services}
+      people={people}
+      initialServiceId={instance.serviceId}
+      onAssignAnother={(serviceId) => {
+        // router.refresh() rilegge la pagina server (assignedPersonIds
+        // aggiornato con la persona appena assegnata), senza cambiare URL —
+        // il remount via key sotto resetta solo lo stato client del form.
+        router.refresh();
+        setInstance((i) => ({ key: i.key + 1, serviceId }));
+      }}
+    />
+  );
+}
+
+function AssignmentFormInner({
+  services,
+  people,
+  initialServiceId,
+  onAssignAnother,
+}: {
+  services: ServiceOption[];
+  people: PersonOption[];
+  initialServiceId?: string;
+  onAssignAnother: (serviceId: string) => void;
 }) {
   const [state, formAction, pending] = useActionState(createAssignment, INITIAL_STATE);
 
@@ -89,12 +127,13 @@ export function AssignmentForm({
           <strong>{state.createdPersonName}</strong> assegnato/a al servizio.
         </p>
         <div className="flex gap-3">
-          <Link
-            href={`/assegnazioni/nuova?serviceId=${state.createdServiceId}`}
+          <button
+            type="button"
+            onClick={() => onAssignAnother(state.createdServiceId!)}
             className="text-sm text-accent hover:underline"
           >
             Assegna un&apos;altra risorsa a questo servizio
-          </Link>
+          </button>
           <Link href={`/servizi/${state.createdServiceId}`} className="text-sm text-ink-secondary hover:underline">
             Vai alla scheda servizio
           </Link>

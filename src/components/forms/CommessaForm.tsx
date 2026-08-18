@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createCommessa, type CommessaFormState } from "@/lib/actions/commessa";
 import { Field, Select, TextInput } from "@/components/forms/Field";
@@ -14,6 +15,37 @@ export function CommessaForm({
 }: {
   clients: { id: string; name: string }[];
   suggestedCode: string;
+}) {
+  // Chiave di remount: "Crea un'altra commessa" (sotto) deve rimettere la
+  // maschera a nuovo. Un <Link> verso /commesse/nuova non naviga quando
+  // l'URL corrente è già quello (caso frequente: il link "+ Nuova commessa"
+  // in navbar non ha query string) — bug reale riscontrato dall'utente per
+  // la stessa ragione su AssignmentForm. router.refresh() rilegge anche il
+  // prossimo codice suggerito e l'elenco clienti aggiornati dal server.
+  const [remountKey, setRemountKey] = useState(0);
+  const router = useRouter();
+
+  return (
+    <CommessaFormInner
+      key={remountKey}
+      clients={clients}
+      suggestedCode={suggestedCode}
+      onCreateAnother={() => {
+        router.refresh();
+        setRemountKey((k) => k + 1);
+      }}
+    />
+  );
+}
+
+function CommessaFormInner({
+  clients,
+  suggestedCode,
+  onCreateAnother,
+}: {
+  clients: { id: string; name: string }[];
+  suggestedCode: string;
+  onCreateAnother: () => void;
 }) {
   const [state, formAction, pending] = useActionState(createCommessa, INITIAL_STATE);
   const [clientMode, setClientMode] = useState<"existing" | "new">(
@@ -30,9 +62,9 @@ export function CommessaForm({
           Il prossimo passo naturale è aggiungerci un servizio — la maschera arriva a breve.
         </p>
         <div className="flex gap-3">
-          <Link href="/commesse/nuova" className="text-sm text-accent hover:underline">
+          <button type="button" onClick={onCreateAnother} className="text-sm text-accent hover:underline">
             Crea un&apos;altra commessa
-          </Link>
+          </button>
           <Link href="/" className="text-sm text-ink-secondary hover:underline">
             Torna al Cruscotto
           </Link>

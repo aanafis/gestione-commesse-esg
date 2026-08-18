@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createService, type ServiceFormState } from "@/lib/actions/service";
 import { Field, Select, TextInput } from "@/components/forms/Field";
@@ -23,6 +24,48 @@ export function ServiceForm({
   people: { id: string; name: string }[];
   defaultMarkup: string;
   initialCommessaId?: string;
+}) {
+  // Chiave di remount: "Crea un altro servizio" (sotto) deve rimettere la
+  // maschera a nuovo. Un <Link> verso /servizi/nuovo non naviga quando l'URL
+  // corrente è già quello (caso frequente: si arriva da /servizi senza query
+  // string) — stesso bug reale già corretto su AssignmentForm/CommessaForm.
+  // router.refresh() rilegge anche il prossimo codice servizio suggerito.
+  const [remountKey, setRemountKey] = useState(0);
+  const router = useRouter();
+
+  return (
+    <ServiceFormInner
+      key={remountKey}
+      commesse={commesse}
+      serviceTypes={serviceTypes}
+      templateNames={templateNames}
+      people={people}
+      defaultMarkup={defaultMarkup}
+      initialCommessaId={initialCommessaId}
+      onCreateAnother={() => {
+        router.refresh();
+        setRemountKey((k) => k + 1);
+      }}
+    />
+  );
+}
+
+function ServiceFormInner({
+  commesse,
+  serviceTypes,
+  templateNames,
+  people,
+  defaultMarkup,
+  initialCommessaId,
+  onCreateAnother,
+}: {
+  commesse: { id: string; code: string; nextServiceCode: string }[];
+  serviceTypes: { id: string; name: string }[];
+  templateNames: string[];
+  people: { id: string; name: string }[];
+  defaultMarkup: string;
+  initialCommessaId?: string;
+  onCreateAnother: () => void;
 }) {
   const [state, formAction, pending] = useActionState(createService, INITIAL_STATE);
 
@@ -62,9 +105,9 @@ export function ServiceForm({
           <Link href={`/servizi/${state.createdId}`} className="text-sm text-accent hover:underline">
             Vai alla scheda servizio
           </Link>
-          <Link href="/servizi/nuovo" className="text-sm text-ink-secondary hover:underline">
+          <button type="button" onClick={onCreateAnother} className="text-sm text-ink-secondary hover:underline">
             Crea un altro servizio
-          </Link>
+          </button>
         </div>
       </div>
     );
