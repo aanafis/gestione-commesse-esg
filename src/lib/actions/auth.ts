@@ -4,7 +4,7 @@ import { randomBytes, createHash } from "crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { SESSION_COOKIE_NAME } from "@/lib/auth/session";
+import { encryptSession, SESSION_COOKIE_NAME, SESSION_DURATION_SECONDS } from "@/lib/auth/session";
 import { sendMagicLinkEmail } from "@/lib/email";
 
 // Magic link (§7). Whitelist implicita: solo le email già presenti in
@@ -94,4 +94,49 @@ export async function requestMagicLink(
 export async function logout() {
   (await cookies()).delete(SESSION_COOKIE_NAME);
   redirect("/login");
+}
+
+// Scambia un token monouso del magic link per una sessione — invocata solo
+// da un click reale sul bottone "Accedi" in /auth/verify (Server Action, mai
+// da una GET). Prima era la GET stessa di /auth/verify a consumare il token:
+// bug reale trovato in produzione — gli scanner di sicurezza aziendali
+// (Microsoft Defender/Safe Links e simili, comuni con la posta su Microsoft
+// 365 come ilprisma.com) precaricano ogni link nell'email per controllarlo,
+// consumando il token PRIMA che l'utente clicchi davvero: il click reale
+// trovava sempre "invalid_token". La pagina GET ora si limita a mostrare lo
+// stato del token (sola lettura, innocua anche se prefetchata); solo questa
+// azione, innescata da un vero click umano, lo marca usato e crea la sessione.
+export async function confirmMagicLink(formData: FormData): Promise<void> {
+  const token = String(formData.get("token") ?? "");
+  if (!token) redirect("/login?error=missing_token");
+
+  const tokenHash = hashToken(token);
+  const row = await db
+    .selectFrom("magicLinkToken as t")
+    .innerJoin("person as p", "p.id", "t.personId")
+    .select(["t.id", "t.expiresAt", "t.usedAt", "p.id as personId", "p.email", "p.name", "p.role", "p.active"])
+    .where("t.tokenHash", "=", tokenHash)
+    .executeTakeFirst();
+
+  const isValid = row && !row.usedAt && row.expiresAt.getTime() >= Date.now() && row.active;
+  if (!row || !isValid) redirect("/login?error=invalid_token");
+
+  await db.updateTable("magicLinkToken").set({ usedAt: new Date() }).where("id", "=", row.id).execute();
+
+  const session = await encryptSession({
+    personId: row.personId,
+    email: row.email,
+    name: row.name,
+    role: row.role,
+  });
+
+  (await cookies()).set(SESSION_COOKIE_NAME, session, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: SESSION_DURATION_SECONDS,
+    path: "/",
+  });
+
+  redirect("/");
 }

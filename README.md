@@ -98,8 +98,18 @@ Magic link, come raccomandato dalla spec — nessuna password.
 
 - **Flusso**: `/login` → email → `requestMagicLink` crea un token monouso
   (hash SHA-256 in `magic_link_token`, scade in 15 minuti) → `/auth/verify?token=...`
-  lo scambia per una sessione (cookie JWT firmato HS256, `src/lib/auth/session.ts`)
-  → redirect a `/`.
+  mostra una pagina di conferma → un click sul bottone "Accedi" (Server
+  Action `confirmMagicLink`) scambia il token per una sessione (cookie JWT
+  firmato HS256, `src/lib/auth/session.ts`) → redirect a `/`.
+- **Perché due passi e non un semplice link cliccabile**: `/auth/verify` era
+  prima una Route Handler che consumava il token già alla GET. Bug reale in
+  produzione — gli scanner di sicurezza email aziendali (Microsoft Defender/
+  Safe Links e simili, comuni con la posta su Microsoft 365 come qui)
+  precaricano ogni link nell'email per controllarlo, consumando il token
+  prima del click umano: l'utente trovava sempre "invalid_token". Ora la GET
+  è di sola lettura (innocua anche se prefetchata quante volte si vuole);
+  solo il POST della Server Action, innescato da un vero click, marca il
+  token usato e crea la sessione.
 - **Whitelist implicita**: solo le email già presenti in `person` (attive)
   ricevono un link. Stesso messaggio per email sconosciuta o persona
   disattivata — non si conferma dall'esterno quali indirizzi sono validi.
@@ -122,14 +132,31 @@ configurato ancora). **Prima del deployment (step 5) va rimosso** e collegato
 un vero invio (Resend, SMTP...) in `src/lib/actions/auth.ts` — cercare il
 `TODO(step 5 - deployment)` lì dentro.
 
-### Bug reale trovato e corretto durante il test di questo step
+### Bug reali trovati e corretti dopo il deployment
 
-Il cookie di sessione veniva impostato con `cookies()` di `next/headers`
-dentro la Route Handler di verifica, ma la risposta restituita era un
-`NextResponse.redirect(...)` costruito a mano: i due non si sincronizzano
-automaticamente in una Route Handler (a differenza di Server Component/Action,
-dove `cookies()` gestisce la risposta implicita). Il sintomo: il login
-sembrava funzionare (redirect a `/`) ma la sessione non veniva davvero
-salvata. Corretto impostando il cookie direttamente sull'oggetto risposta
-(`response.cookies.set(...)`) — vedi il commento in `src/app/auth/verify/route.ts`.
+**1) Cookie di sessione non salvato (trovato in sviluppo).** `/auth/verify`
+era allora una Route Handler: il cookie veniva impostato con `cookies()` di
+`next/headers`, ma la risposta restituita era un `NextResponse.redirect(...)`
+costruito a mano — i due non si sincronizzano automaticamente in una Route
+Handler (a differenza di Server Component/Action, dove `cookies()` gestisce
+la risposta implicita). Il sintomo: il login sembrava funzionare (redirect a
+`/`) ma la sessione non veniva davvero salvata. Corretto allora impostando il
+cookie direttamente sull'oggetto risposta (`response.cookies.set(...)`).
 Scoperto testando via HTTP reale, non dalla lettura del codice.
+
+**2) Token del magic link consumato prima del click umano (trovato in
+produzione).** Quella stessa Route Handler faceva tutto in una GET: leggeva
+il token, lo marcava usato, creava la sessione. Un utente reale (email
+aziendale su Microsoft 365) riceveva sempre "invalid_token" cliccando un
+link appena arrivato. Causa: gli scanner di sicurezza email aziendali
+(Safe Links e simili) precaricano ogni link in un'email per controllarlo —
+quella GET automatica consumava il token prima che l'utente potesse
+cliccarlo davvero. Corretto separando in due passi: `/auth/verify` è ora una
+pagina (non più una Route Handler) che fa solo una lettura — innocua anche
+se prefetchata quante volte si vuole; solo un vero click sul bottone
+"Accedi" (Server Action `confirmMagicLink` in `src/lib/actions/auth.ts`,
+invocata via POST) marca il token usato e crea la sessione. Diagnosticato
+confrontando `used_at` nella tabella `magic_link_token` (consumato ~10-20s
+dopo l'invio, prima del click riferito dall'utente) con un test HTTP che
+riproduceva l'intero flusso — non riproducibile dal solo codice, serviva lo
+storico reale dei token in produzione.
