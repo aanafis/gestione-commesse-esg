@@ -8,7 +8,7 @@ import { db } from "@/lib/db";
 // verifica la sessione, riusato da Server Components, Server Actions e
 // Route Handler. cache() la memoizza per la durata di una singola
 // richiesta: più chiamate a getSession() nello stesso render non
-// ripetono la verifica del cookie né la query "la persona è ancora attiva".
+// ripetono la verifica del cookie né la query alla persona.
 
 export const getSession = cache(async (): Promise<SessionPayload | null> => {
   let token: string | undefined;
@@ -23,22 +23,38 @@ export const getSession = cache(async (): Promise<SessionPayload | null> => {
   const payload = await decryptSession(token);
   if (!payload) return null;
 
-  // Controllo "secure", non solo ottimistico (§7): se la persona è stata
-  // disattivata dopo l'emissione della sessione, l'accesso si chiude subito
-  // invece di aspettare la scadenza del cookie.
+  // Il JWT prova solo "chi sei" (personId, firmato) — ruolo, stato attivo e
+  // nome si rileggono sempre dal database, mai dal valore incapsulato nel
+  // token al momento del login. Altrimenti revocare i permessi admin a
+  // qualcuno non avrebbe effetto finché la sua sessione non scade (fino a
+  // 12 ore) — importante ora che esiste una sezione Admin da proteggere.
   const person = await db
     .selectFrom("person")
-    .select(["active"])
+    .select(["name", "email", "role", "active"])
     .where("id", "=", payload.personId)
     .executeTakeFirst();
   if (!person?.active) return null;
 
-  return payload;
+  return {
+    personId: payload.personId,
+    name: person.name,
+    email: person.email,
+    role: person.role,
+  };
 });
 
 /** Per le Server Component / pagine: reindirizza a /login se non autenticato. */
 export async function requireSession(): Promise<SessionPayload> {
   const session = await getSession();
   if (!session) redirect("/login");
+  return session;
+}
+
+/** Per le pagine Admin (§6.6, §7: "admin — full access, rate card, settings"). */
+export async function requireAdmin(): Promise<SessionPayload> {
+  const session = await requireSession();
+  if (session.role !== "admin") {
+    redirect("/?error=non_autorizzato");
+  }
   return session;
 }

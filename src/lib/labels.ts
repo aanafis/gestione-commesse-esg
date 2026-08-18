@@ -1,6 +1,11 @@
 // Traduzione degli enum (identificatori in inglese nel database, §0 della
 // spec) in etichette italiane per l'interfaccia.
 
+export const PERSON_ROLE_LABELS: Record<string, string> = {
+  admin: "Amministratore",
+  member: "Membro",
+};
+
 export const SERVICE_STATUS_LABELS: Record<string, string> = {
   active: "Attivo",
   suspended: "Sospeso",
@@ -66,6 +71,20 @@ export const APPROVAL_LEVEL_LABELS: Record<string, string> = {
   autonomous: "Autonoma",
   project_manager: "Project manager",
   director: "Direttore",
+};
+
+export const SUPPLIER_CATEGORY_LABELS: Record<string, string> = {
+  commissioning_agent: "Commissioning agent",
+  testing_laboratory: "Laboratorio prove",
+  energy_modeler: "Energy modeler",
+  acoustics: "Acustica",
+  lighting: "Illuminotecnica",
+  iaq_survey: "Indagini IAQ",
+  water_analysis: "Analisi acqua",
+  accessibility_surveyor: "Surveyor accessibilità",
+  external_technical_consultant: "Consulente tecnico esterno",
+  esg_certification_body: "Certificazioni ESG",
+  other: "Altro",
 };
 
 export const TIME_ENTRY_SOURCE_LABELS: Record<string, string> = {

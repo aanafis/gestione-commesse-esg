@@ -34,6 +34,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 <Link href="/commesse/nuova" className="font-medium text-accent hover:underline">
                   + Nuova commessa
                 </Link>
+                {session.role === "admin" && (
+                  <Link href="/admin" className="hover:text-ink-primary">
+                    Admin
+                  </Link>
+                )}
                 <span className="text-ink-muted">|</span>
                 <span className="text-ink-primary">{session.name}</span>
                 <form action={logout}>

@@ -35,7 +35,16 @@ npx kysely-codegen --url "$env:DATABASE_URL" --out-file "src\lib\db\types.ts" --
 - [x] 2. Schermate di sola lettura — **Cruscotto** (`/`), **Servizi** (`/servizi`), **Scheda servizio** (`/servizi/[id]`), **Controllo ore** (`/controllo-ore`)
 - [x] 3. Maschere di inserimento dati — tutte fatte: Nuova commessa, Nuovo servizio, Assegna risorsa, Nuovo ODA, Aggiorna avanzamento fase, Previsione trimestrale, **Import ore da CSV** (`/ore/importa`, mappatura colonne + anteprima + upsert)
 - [x] 4. Autenticazione — magic link (`/login`), sessione JWT nel cookie, `created_by`/`updated_by`/`recorded_by_id` ora valorizzati su tutte le maschere
-- [ ] 5. Deployment
+- [x] 5. Deployment — **https://gestione-commesse-esg.vercel.app**, GitHub → Vercel collegati (push su `main` pubblica da solo)
+
+## Admin (§6.6)
+
+`/admin` — riservato al ruolo `admin` (verificato sia dal layout che da ogni
+Server Action, non solo dal link nascosto in header): Livelli e tariffe,
+Persone (livello/ruolo/accesso al login), Clienti, Fornitori, Template fasi
+(con controllo somma quote = 100%), Impostazioni (soglie di approvazione,
+markup di default). Un admin non può disattivare se stesso né togliersi il
+ruolo di amministratore da qui, per non restare tutti fuori per errore.
 
 ## Struttura
 
