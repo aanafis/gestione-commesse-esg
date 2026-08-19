@@ -59,10 +59,15 @@ risolvono bene con il bundler di Next.js/Turbopack).
 
 `/admin` — riservato al ruolo `admin` (verificato sia dal layout che da ogni
 Server Action, non solo dal link nascosto in header): Livelli e tariffe,
-Persone (livello/ruolo/accesso al login), Clienti, Fornitori, Template fasi
-(con controllo somma quote = 100%), Impostazioni (soglie di approvazione,
-markup di default). Un admin non può disattivare se stesso né togliersi il
-ruolo di amministratore da qui, per non restare tutti fuori per errore.
+Persone (livello/ruolo/accesso al login), Clienti, Fornitori, **Tipi di
+servizio** (l'elenco a tendina di "Nuovo servizio" — LEED, WELL, CRREM...
+— estendibile in autonomia), Template fasi (con controllo somma quote =
+100%; "+ Nuova fase" crea anche un template per un tipo di servizio appena
+creato — un template è semplicemente il primo insert con quel nome, nessuna
+tabella "template" a parte da popolare prima), Impostazioni (soglie di
+approvazione, markup di default). Un admin non può disattivare se stesso né
+togliersi il ruolo di amministratore da qui, per non restare tutti fuori per
+errore.
 
 ## Struttura
 

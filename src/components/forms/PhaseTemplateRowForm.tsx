@@ -34,6 +34,7 @@ export function PhaseTemplateRowForm({ row }: { row: PhaseTemplateRow }) {
   return (
     <form action={formAction} className="flex max-w-md flex-col gap-6">
       <input type="hidden" name="id" value={row.id} />
+      <input type="hidden" name="templateName" value={row.templateName} />
       {err._form && <p className="text-sm text-status-critical">{err._form}</p>}
 
       <p className="text-xs text-ink-muted">Template: {row.templateName}</p>

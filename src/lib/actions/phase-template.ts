@@ -10,6 +10,7 @@ import { getSession } from "@/lib/auth/dal";
 
 export type PhaseTemplateFormValues = {
   id: string;
+  templateName: string;
   phaseName: string;
   expectedDeliverable: string;
   contractualMilestone: string;
@@ -36,6 +37,7 @@ export async function savePhaseTemplateRow(
 
   const values: PhaseTemplateFormValues = {
     id: String(formData.get("id") ?? ""),
+    templateName: String(formData.get("templateName") ?? "").trim(),
     phaseName: String(formData.get("phaseName") ?? "").trim(),
     expectedDeliverable: String(formData.get("expectedDeliverable") ?? "").trim(),
     contractualMilestone: String(formData.get("contractualMilestone") ?? "false"),
@@ -45,6 +47,7 @@ export async function savePhaseTemplateRow(
   };
 
   const errors: PhaseTemplateFormState["errors"] = {};
+  if (!values.id && !values.templateName) errors._form = "Nome template mancante.";
   if (!values.phaseName) errors.phaseName = "Obbligatorio.";
   const duration = parseInt(values.durationDays, 10);
   if (Number.isNaN(duration) || duration < 0) errors.durationDays = "Numero di giorni non valido.";
@@ -57,20 +60,60 @@ export async function savePhaseTemplateRow(
     return { status: "error", errors, values };
   }
 
-  const row = await db
-    .updateTable("phaseTemplate")
-    .set({
-      phaseName: values.phaseName,
-      expectedDeliverable: values.expectedDeliverable || null,
-      contractualMilestone: values.contractualMilestone === "true",
-      durationDays: duration,
-      hoursQuotaPct: quota.toFixed(4),
-      sortOrder,
-      updatedBy: session.personId,
-    })
-    .where("id", "=", values.id)
-    .returning("templateName")
-    .executeTakeFirstOrThrow();
+  try {
+    if (values.id) {
+      const row = await db
+        .updateTable("phaseTemplate")
+        .set({
+          phaseName: values.phaseName,
+          expectedDeliverable: values.expectedDeliverable || null,
+          contractualMilestone: values.contractualMilestone === "true",
+          durationDays: duration,
+          hoursQuotaPct: quota.toFixed(4),
+          sortOrder,
+          updatedBy: session.personId,
+        })
+        .where("id", "=", values.id)
+        .returning("templateName")
+        .executeTakeFirstOrThrow();
 
-  return { status: "success", templateName: row.templateName };
+      return { status: "success", templateName: row.templateName };
+    }
+
+    // Nuova riga — un nuovo template è semplicemente il primo insert con
+    // quel template_name (nessuna tabella "template" a parte da popolare
+    // prima, coerente con come service.template_name è già un riferimento
+    // "morbido", non una foreign key).
+    const row = await db
+      .insertInto("phaseTemplate")
+      .values({
+        templateName: values.templateName,
+        phaseName: values.phaseName,
+        expectedDeliverable: values.expectedDeliverable || null,
+        contractualMilestone: values.contractualMilestone === "true",
+        durationDays: duration,
+        hoursQuotaPct: quota.toFixed(4),
+        sortOrder,
+        createdBy: session.personId,
+        updatedBy: session.personId,
+      })
+      .returning("templateName")
+      .executeTakeFirstOrThrow();
+
+    return { status: "success", templateName: row.templateName };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (message.includes("phase_template_template_name_sort_order_key")) {
+      return {
+        status: "error",
+        errors: { sortOrder: "Esiste già una fase con questo ordine per questo template." },
+        values,
+      };
+    }
+    return {
+      status: "error",
+      errors: { _form: "Errore imprevisto durante il salvataggio. Riprova." },
+      values,
+    };
+  }
 }

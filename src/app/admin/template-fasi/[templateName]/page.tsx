@@ -15,14 +15,22 @@ export default async function TemplateFasiDettaglioPage(props: PageProps<"/admin
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <Link href="/admin/template-fasi" className="text-sm text-ink-secondary hover:text-ink-primary hover:underline">
-          ← Template fasi
+      <div className="flex items-center justify-between">
+        <div>
+          <Link href="/admin/template-fasi" className="text-sm text-ink-secondary hover:text-ink-primary hover:underline">
+            ← Template fasi
+          </Link>
+          <h2 className="text-xl font-semibold text-ink-primary">{templateName}</h2>
+          <p className={`text-sm ${ok ? "text-ink-secondary" : "font-semibold text-status-critical"}`}>
+            Somma quote ore: {formatPercent(totalQuota)} {ok ? "" : "— non torna a 100%"}
+          </p>
+        </div>
+        <Link
+          href={`/admin/template-fasi/fase/nuova?templateName=${encodeURIComponent(templateName)}`}
+          className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-white"
+        >
+          + Nuova fase
         </Link>
-        <h2 className="text-xl font-semibold text-ink-primary">{templateName}</h2>
-        <p className={`text-sm ${ok ? "text-ink-secondary" : "font-semibold text-status-critical"}`}>
-          Somma quote ore: {formatPercent(totalQuota)} {ok ? "" : "— non torna a 100%"}
-        </p>
       </div>
       <DataTable
         rows={phases}

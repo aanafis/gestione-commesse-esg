@@ -12,6 +12,14 @@ export function getLevel(id: string) {
   return db.selectFrom("level").selectAll().where("id", "=", id).executeTakeFirst();
 }
 
+export function getAllServiceTypes() {
+  return db.selectFrom("serviceType").selectAll().orderBy("sortOrder").execute();
+}
+
+export function getServiceType(id: string) {
+  return db.selectFrom("serviceType").selectAll().where("id", "=", id).executeTakeFirst();
+}
+
 export function getAllPeople() {
   return db
     .selectFrom("person as p")

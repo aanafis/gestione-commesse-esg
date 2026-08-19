@@ -5,6 +5,7 @@ const SECTIONS = [
   { href: "/admin/persone", label: "Persone", hint: "Livello, ruolo, accesso al login" },
   { href: "/admin/clienti", label: "Clienti", hint: "Anagrafica clienti" },
   { href: "/admin/fornitori", label: "Fornitori", hint: "Anagrafica fornitori per gli ODA" },
+  { href: "/admin/tipi-servizio", label: "Tipi di servizio", hint: "Elenco a tendina di \"Nuovo servizio\" (LEED, WELL, CRREM...)" },
   { href: "/admin/template-fasi", label: "Template fasi", hint: "Fasi standard per tipo di servizio" },
   { href: "/admin/impostazioni", label: "Impostazioni", hint: "Soglie di approvazione, markup di default" },
 ];
