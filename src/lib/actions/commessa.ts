@@ -141,3 +141,95 @@ export async function createCommessa(
     };
   }
 }
+
+// Modifica di una commessa già esistente. Il codice è l'identità della
+// commessa (i codici servizio ne dipendono, "{commessa.code}-{lettera}") —
+// non si tocca da qui, stessa scelta già fatta per il servizio. Il cliente
+// invece è modificabile: qui non c'è un formato di codice che lo lega,
+// solo un riferimento — utile per correggere un cliente sbagliato in fase
+// di creazione.
+
+export type CommessaEditFormValues = {
+  id: string;
+  clientId: string;
+  assetName: string;
+  clientContact: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  contractValue: string;
+};
+
+export type CommessaEditFormState = {
+  status: "idle" | "error" | "success";
+  errors?: Partial<Record<keyof CommessaEditFormValues | "_form", string>>;
+  values?: CommessaEditFormValues;
+};
+
+export async function updateCommessa(
+  _prevState: CommessaEditFormState,
+  formData: FormData
+): Promise<CommessaEditFormState> {
+  const session = await getSession();
+  if (!session) {
+    return { status: "error", errors: { _form: "Sessione scaduta — accedi di nuovo." } };
+  }
+
+  const values: CommessaEditFormValues = {
+    id: String(formData.get("id") ?? ""),
+    clientId: String(formData.get("clientId") ?? ""),
+    assetName: String(formData.get("assetName") ?? "").trim(),
+    clientContact: String(formData.get("clientContact") ?? "").trim(),
+    startDate: String(formData.get("startDate") ?? ""),
+    endDate: String(formData.get("endDate") ?? ""),
+    status: String(formData.get("status") ?? "active"),
+    contractValue: String(formData.get("contractValue") ?? ""),
+  };
+
+  const errors: CommessaEditFormState["errors"] = {};
+
+  if (!values.id) errors._form = "Commessa non specificata.";
+  if (!values.clientId) errors.clientId = "Seleziona un cliente.";
+
+  const contractValue = Number(values.contractValue.replace(",", "."));
+  if (values.contractValue === "" || Number.isNaN(contractValue) || contractValue < 0) {
+    errors.contractValue = "Inserisci un importo valido (0 o superiore).";
+  }
+
+  if (!isCommessaStatus(values.status)) {
+    errors.status = "Stato non valido.";
+  }
+
+  if (values.startDate && values.endDate && values.endDate < values.startDate) {
+    errors.endDate = "La fine prevista non può precedere la data di avvio.";
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return { status: "error", errors, values };
+  }
+
+  try {
+    await db
+      .updateTable("commessa")
+      .set({
+        clientId: values.clientId,
+        assetName: values.assetName || null,
+        clientContact: values.clientContact || null,
+        startDate: values.startDate || null,
+        endDate: values.endDate || null,
+        status: values.status as CommessaStatus,
+        contractValue: contractValue.toFixed(2),
+        updatedBy: session.personId,
+      })
+      .where("id", "=", values.id)
+      .execute();
+
+    return { status: "success" };
+  } catch {
+    return {
+      status: "error",
+      errors: { _form: "Errore imprevisto durante il salvataggio. Riprova." },
+      values,
+    };
+  }
+}

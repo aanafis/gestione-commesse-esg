@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { formatMoney, formatPercent, toNumber } from "@/lib/format";
 import { COMMESSA_STATUS_LABELS, label } from "@/lib/labels";
 import type { CommessaListRow } from "@/lib/queries/commessa-list";
@@ -94,12 +95,13 @@ export function CommessaListTable({ rows }: { rows: CommessaListRow[] }) {
                 Da fatturare {sortIndicator("toBeInvoiced")}
               </th>
               <th className="px-4 py-2 text-right font-medium">Incassato</th>
+              <th className="px-4 py-2 font-medium"></th>
             </tr>
           </thead>
           <tbody className="[font-variant-numeric:tabular-nums]">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={10} className="px-4 py-6 text-center text-sm text-ink-muted">
+                <td colSpan={11} className="px-4 py-6 text-center text-sm text-ink-muted">
                   Nessuna commessa corrisponde ai filtri scelti.
                 </td>
               </tr>
@@ -124,6 +126,11 @@ export function CommessaListTable({ rows }: { rows: CommessaListRow[] }) {
                   <td className="px-4 py-2 text-right text-ink-secondary">{formatPercent(r.marginPct)}</td>
                   <td className="px-4 py-2 text-right text-ink-secondary">{formatMoney(r.toBeInvoiced)}</td>
                   <td className="px-4 py-2 text-right text-ink-secondary">{formatMoney(r.collected)}</td>
+                  <td className="px-4 py-2 text-right">
+                    <Link href={`/commesse/${r.commessaId}/modifica`} className="text-accent hover:underline">
+                      Modifica
+                    </Link>
+                  </td>
                 </tr>
               ))
             )}

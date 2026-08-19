@@ -29,3 +29,24 @@ export async function suggestNextCommessaCode(): Promise<string> {
   const nextNum = Number.isFinite(lastNum) ? lastNum + 1 : 1;
   return `${yearPrefix}-${String(nextNum).padStart(3, "0")}`;
 }
+
+/** Valori grezzi per precompilare la maschera di modifica. Il codice non è
+ * qui: è l'identità della commessa, non si modifica da questa maschera
+ * (stessa scelta già fatta per il servizio). */
+export function getCommessaForEdit(id: string) {
+  return db
+    .selectFrom("commessa")
+    .select([
+      "id",
+      "code",
+      "clientId",
+      "assetName",
+      "clientContact",
+      "startDate",
+      "endDate",
+      "status",
+      "contractValue",
+    ])
+    .where("id", "=", id)
+    .executeTakeFirst();
+}
