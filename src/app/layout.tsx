@@ -34,6 +34,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 <Link href="/controllo-ore" className="hover:text-ink-primary">
                   Controllo ore
                 </Link>
+                <Link href="/mappa" className="hover:text-ink-primary">
+                  Mappa
+                </Link>
                 <Link href="/commesse/nuova" className="font-medium text-accent hover:underline">
                   + Nuova commessa
                 </Link>

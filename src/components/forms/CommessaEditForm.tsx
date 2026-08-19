@@ -17,6 +17,7 @@ export function CommessaEditForm({
     code: string;
     clientId: string;
     assetName: string | null;
+    address: string | null;
     clientContact: string | null;
     startDate: string; // già in formato input-date (YYYY-MM-DD)
     endDate: string;
@@ -29,8 +30,30 @@ export function CommessaEditForm({
   const router = useRouter();
 
   useEffect(() => {
-    if (state.status === "success") router.push("/commesse");
-  }, [state.status, router]);
+    // Se l'indirizzo non è stato trovato dalla geocodifica, resta un attimo
+    // sulla pagina per mostrare l'avviso invece di sparire subito con lo
+    // stesso redirect immediato degli altri salvataggi riusciti.
+    if (state.status === "success" && !state.geocodeFailed) router.push("/commesse");
+  }, [state.status, state.geocodeFailed, router]);
+
+  if (state.status === "success" && state.geocodeFailed) {
+    return (
+      <div className="flex max-w-2xl flex-col gap-4 rounded-lg border border-border bg-surface p-6">
+        <p className="text-sm text-ink-primary">Commessa aggiornata.</p>
+        <p className="text-sm text-status-critical">
+          Indirizzo salvato, ma non trovato sulla mappa — verifica che sia scritto per esteso (via, numero,
+          città) e correggilo se serve.
+        </p>
+        <button
+          type="button"
+          onClick={() => router.push("/commesse")}
+          className="self-start text-sm text-accent hover:underline"
+        >
+          Torna alle commesse
+        </button>
+      </div>
+    );
+  }
 
   const v = state.values;
   const err = state.errors ?? {};
@@ -61,6 +84,20 @@ export function CommessaEditForm({
 
       <Field label="Asset / edificio" htmlFor="assetName" error={err.assetName} hint="Facoltativo">
         <TextInput id="assetName" name="assetName" defaultValue={v?.assetName ?? commessa.assetName ?? ""} />
+      </Field>
+
+      <Field
+        label="Indirizzo"
+        htmlFor="address"
+        error={err.address}
+        hint="Facoltativo — usato per localizzare l'asset sulla mappa (geocodifica automatica via OpenStreetMap)"
+      >
+        <TextInput
+          id="address"
+          name="address"
+          defaultValue={v?.address ?? commessa.address ?? ""}
+          placeholder="Via, numero civico, città"
+        />
       </Field>
 
       <Field label="Referente cliente" htmlFor="clientContact" error={err.clientContact} hint="Facoltativo">

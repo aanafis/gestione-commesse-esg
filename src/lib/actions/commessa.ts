@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import type { CommessaStatus } from "@/lib/db/types";
 import { getSession } from "@/lib/auth/dal";
+import { geocodeAddress } from "@/lib/geocode";
 
 export type CommessaFormValues = {
   code: string;
@@ -11,6 +12,7 @@ export type CommessaFormValues = {
   newClientName: string;
   newClientVat: string;
   assetName: string;
+  address: string;
   clientContact: string;
   startDate: string;
   endDate: string;
@@ -23,6 +25,9 @@ export type CommessaFormState = {
   errors?: Partial<Record<keyof CommessaFormValues | "_form", string>>;
   values?: CommessaFormValues;
   createdCode?: string;
+  /** L'indirizzo è stato salvato ma non trovato dal geocoding (§ sotto) —
+   * niente coordinate sulla mappa per questa commessa, non blocca il resto. */
+  geocodeFailed?: boolean;
 };
 
 const CODE_RE = /^\d{2}-\d{3}$/;
@@ -48,6 +53,7 @@ export async function createCommessa(
     newClientName: String(formData.get("newClientName") ?? "").trim(),
     newClientVat: String(formData.get("newClientVat") ?? "").trim(),
     assetName: String(formData.get("assetName") ?? "").trim(),
+    address: String(formData.get("address") ?? "").trim(),
     clientContact: String(formData.get("clientContact") ?? "").trim(),
     startDate: String(formData.get("startDate") ?? ""),
     endDate: String(formData.get("endDate") ?? ""),
@@ -86,6 +92,11 @@ export async function createCommessa(
     return { status: "error", errors, values };
   }
 
+  // Geocodifica fuori dalla transazione: è una chiamata di rete a un
+  // servizio esterno (Nominatim/OpenStreetMap, §11) — non deve tenere aperta
+  // una transazione database mentre aspetta una risposta HTTP.
+  const geocoded = values.address ? await geocodeAddress(values.address) : null;
+
   try {
     const created = await db.transaction().execute(async (trx) => {
       let clientId: string;
@@ -112,6 +123,9 @@ export async function createCommessa(
           code: values.code,
           clientId,
           assetName: values.assetName || null,
+          address: values.address || null,
+          latitude: geocoded ? geocoded.latitude.toFixed(6) : null,
+          longitude: geocoded ? geocoded.longitude.toFixed(6) : null,
           clientContact: values.clientContact || null,
           startDate: values.startDate || null,
           endDate: values.endDate || null,
@@ -124,7 +138,11 @@ export async function createCommessa(
         .executeTakeFirstOrThrow();
     });
 
-    return { status: "success", createdCode: created.code };
+    return {
+      status: "success",
+      createdCode: created.code,
+      geocodeFailed: !!values.address && !geocoded,
+    };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     if (message.includes("commessa_code_key")) {
@@ -153,6 +171,7 @@ export type CommessaEditFormValues = {
   id: string;
   clientId: string;
   assetName: string;
+  address: string;
   clientContact: string;
   startDate: string;
   endDate: string;
@@ -164,6 +183,7 @@ export type CommessaEditFormState = {
   status: "idle" | "error" | "success";
   errors?: Partial<Record<keyof CommessaEditFormValues | "_form", string>>;
   values?: CommessaEditFormValues;
+  geocodeFailed?: boolean;
 };
 
 export async function updateCommessa(
@@ -179,6 +199,7 @@ export async function updateCommessa(
     id: String(formData.get("id") ?? ""),
     clientId: String(formData.get("clientId") ?? ""),
     assetName: String(formData.get("assetName") ?? "").trim(),
+    address: String(formData.get("address") ?? "").trim(),
     clientContact: String(formData.get("clientContact") ?? "").trim(),
     startDate: String(formData.get("startDate") ?? ""),
     endDate: String(formData.get("endDate") ?? ""),
@@ -209,11 +230,45 @@ export async function updateCommessa(
   }
 
   try {
+    // Ri-geocodifica solo se l'indirizzo è cambiato — evita una chiamata di
+    // rete inutile ad ogni singolo salvataggio della maschera (es. se si sta
+    // solo correggendo il valore contratto). Se l'indirizzo viene svuotato,
+    // anche le coordinate si svuotano.
+    const current = await db
+      .selectFrom("commessa")
+      .select(["address", "latitude", "longitude"])
+      .where("id", "=", values.id)
+      .executeTakeFirst();
+
+    let latitude = current?.latitude ?? null;
+    let longitude = current?.longitude ?? null;
+    let geocodeFailed = false;
+
+    if (values.address !== (current?.address ?? "")) {
+      if (!values.address) {
+        latitude = null;
+        longitude = null;
+      } else {
+        const geocoded = await geocodeAddress(values.address);
+        if (geocoded) {
+          latitude = geocoded.latitude.toFixed(6);
+          longitude = geocoded.longitude.toFixed(6);
+        } else {
+          latitude = null;
+          longitude = null;
+          geocodeFailed = true;
+        }
+      }
+    }
+
     await db
       .updateTable("commessa")
       .set({
         clientId: values.clientId,
         assetName: values.assetName || null,
+        address: values.address || null,
+        latitude,
+        longitude,
         clientContact: values.clientContact || null,
         startDate: values.startDate || null,
         endDate: values.endDate || null,
@@ -224,7 +279,7 @@ export async function updateCommessa(
       .where("id", "=", values.id)
       .execute();
 
-    return { status: "success" };
+    return { status: "success", geocodeFailed };
   } catch {
     return {
       status: "error",

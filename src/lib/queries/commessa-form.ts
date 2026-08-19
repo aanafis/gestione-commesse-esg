@@ -41,6 +41,7 @@ export function getCommessaForEdit(id: string) {
       "code",
       "clientId",
       "assetName",
+      "address",
       "clientContact",
       "startDate",
       "endDate",

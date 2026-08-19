@@ -33,6 +33,7 @@ export default async function ModificaCommessaPage(props: PageProps<"/commesse/[
           code: commessa.code,
           clientId: commessa.clientId,
           assetName: commessa.assetName,
+          address: commessa.address,
           clientContact: commessa.clientContact,
           startDate: toDateInputValue(commessa.startDate),
           endDate: toDateInputValue(commessa.endDate),

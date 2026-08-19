@@ -61,6 +61,12 @@ function CommessaFormInner({
         <p className="text-xs text-ink-muted">
           Il prossimo passo naturale è aggiungerci un servizio — la maschera arriva a breve.
         </p>
+        {state.geocodeFailed && (
+          <p className="text-xs text-status-critical">
+            Indirizzo salvato, ma non trovato sulla mappa — verifica che sia scritto per esteso (via, numero,
+            città).
+          </p>
+        )}
         <div className="flex gap-3">
           <button type="button" onClick={onCreateAnother} className="text-sm text-accent hover:underline">
             Crea un&apos;altra commessa
@@ -142,6 +148,15 @@ function CommessaFormInner({
 
       <Field label="Asset / edificio" htmlFor="assetName" error={err.assetName} hint="Facoltativo">
         <TextInput id="assetName" name="assetName" defaultValue={v?.assetName ?? ""} />
+      </Field>
+
+      <Field
+        label="Indirizzo"
+        htmlFor="address"
+        error={err.address}
+        hint="Facoltativo — usato per localizzare l'asset sulla mappa (geocodifica automatica via OpenStreetMap)"
+      >
+        <TextInput id="address" name="address" defaultValue={v?.address ?? ""} placeholder="Via, numero civico, città" />
       </Field>
 
       <Field label="Referente cliente" htmlFor="clientContact" error={err.clientContact} hint="Facoltativo">

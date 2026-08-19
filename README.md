@@ -32,11 +32,28 @@ npx kysely-codegen --url "$env:DATABASE_URL" --out-file "src\lib\db\types.ts" --
 ## Stato di avanzamento (SPEC.md §0)
 
 - [x] 1. Schema database + migration + seed
-- [x] 2. Schermate di sola lettura — **Cruscotto** (`/`), **Commesse** (`/commesse`, tutte le commesse con quadratura §5), **Servizi** (`/servizi`), **Scheda servizio** (`/servizi/[id]`), **Controllo ore** (`/controllo-ore`)
+- [x] 2. Schermate di sola lettura — **Cruscotto** (`/`), **Commesse** (`/commesse`, tutte le commesse con quadratura §5), **Servizi** (`/servizi`), **Scheda servizio** (`/servizi/[id]`), **Controllo ore** (`/controllo-ore`), **Mappa progetti** (`/mappa`, un pin per commessa con indirizzo geocodificato)
 - [x] 3. Maschere di inserimento dati — tutte fatte: Nuova commessa, Nuovo servizio, Assegna risorsa, Nuovo ODA, Aggiorna avanzamento fase, Previsione trimestrale, **Import ore da CSV** (`/ore/importa`, mappatura colonne + anteprima + upsert), **Registra ore** (`/ore/nuova`, singola riga a mano — upsert su servizio+persona+mese solo tra righe manuali, non tocca mai le righe da import)
 - [x] 4. Autenticazione — magic link (`/login`), sessione JWT nel cookie, `created_by`/`updated_by`/`recorded_by_id` ora valorizzati su tutte le maschere
 - [x] 5. Deployment — **https://gestione-commesse-esg.vercel.app**, GitHub → Vercel collegati (push su `main` pubblica da solo)
 - [x] Migrazione commessa pilota 26-017 (Adyen) — vedi `db/import-pilot-commessa-26-017.js`, riconciliazione con l'Excel confermata su margine, ore EAC e alert di entrambi i servizi
+
+## Indirizzo asset e mappa progetti (§11)
+
+Ogni commessa può avere un indirizzo (campo libero, maschera Commessa). Al
+salvataggio, se l'indirizzo è nuovo o è cambiato, `src/lib/geocode.ts` lo
+traduce in coordinate via **Nominatim (OpenStreetMap)** — gratuito, nessuna
+chiave API né fatturazione da configurare (scelta esplicita dell'utente al
+posto di Google Maps). Se l'indirizzo non viene trovato, si salva comunque
+il testo ma senza coordinate: la maschera lo segnala, il resto del
+salvataggio non si blocca mai per questo.
+
+`/mappa` mostra un pin per ogni commessa con coordinate — libreria
+**Leaflet** usata "a mano" (`src/components/ProjectsMap.tsx`), non il
+wrapper `react-leaflet`: evita le sottigliezze SSR/hydration attorno a una
+libreria che richiede `window`, e i marker sono cerchi colorati disegnati
+inline invece dei pin di default di Leaflet (i cui percorsi immagine non si
+risolvono bene con il bundler di Next.js/Turbopack).
 
 ## Admin (§6.6)
 

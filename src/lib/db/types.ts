@@ -83,6 +83,7 @@ export interface Client {
 }
 
 export interface Commessa {
+  address: string | null;
   assetName: string | null;
   clientContact: string | null;
   clientId: Int8;
@@ -92,6 +93,8 @@ export interface Commessa {
   createdBy: Int8 | null;
   endDate: Timestamp | null;
   id: Generated<Int8>;
+  latitude: Numeric | null;
+  longitude: Numeric | null;
   startDate: Timestamp | null;
   status: Generated<CommessaStatus>;
   updatedAt: Generated<Timestamp>;
