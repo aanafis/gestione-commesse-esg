@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ServiceEditForm } from "@/components/forms/ServiceEditForm";
+import { DeleteServiceButton } from "@/components/forms/DeleteServiceButton";
 import {
   getActivePeopleForSelect,
   getServiceForEdit,
@@ -56,6 +57,10 @@ export default async function ModificaServizioPage(props: PageProps<"/servizi/[i
         serviceTypes={serviceTypes}
         people={people}
       />
+
+      <div className="max-w-2xl">
+        <DeleteServiceButton serviceId={service.id} serviceCode={service.code} />
+      </div>
     </div>
   );
 }

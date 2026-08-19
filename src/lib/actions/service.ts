@@ -320,3 +320,81 @@ export async function updateService(
     };
   }
 }
+
+// Eliminazione completa di un servizio (richiesta dall'utente: un servizio
+// creato per errore, senza dati reali sopra). Cancella a cascata tutto ciò
+// che dipende dal servizio — non c'è ON DELETE CASCADE nello schema (di
+// proposito: un DELETE distruttivo dev'essere sempre esplicito, mai un
+// effetto collaterale automatico di un'altra azione), quindi l'ordine qui
+// rispetta le foreign key (prima chi referenzia fase/servizio, poi fase,
+// poi il servizio).
+//
+// Guardia: blocca se esistono SAL già emessi/incassati o righe ODA già
+// fatturate dal fornitore — quelli sono eventi fiscali reali già accaduti
+// fuori dal database (fattura mandata al cliente o ricevuta dal fornitore);
+// cancellarli qui non li annullerebbe nella realtà. Fasi, assegnazioni, ore
+// e ODA non ancora fatturati sono invece puri dati di pianificazione interna
+// e si possono cancellare senza rischio.
+
+export type DeleteServiceFormState = {
+  status: "idle" | "error" | "success";
+  error?: string;
+};
+
+export async function deleteService(
+  _prevState: DeleteServiceFormState,
+  formData: FormData
+): Promise<DeleteServiceFormState> {
+  const session = await getSession();
+  if (!session) {
+    return { status: "error", error: "Sessione scaduta — accedi di nuovo." };
+  }
+
+  const id = String(formData.get("id") ?? "");
+  if (!id) {
+    return { status: "error", error: "Servizio non specificato." };
+  }
+
+  try {
+    await db.transaction().execute(async (trx) => {
+      const service = await trx.selectFrom("service").select(["id"]).where("id", "=", id).executeTakeFirst();
+      if (!service) throw new Error("SERVICE_NOT_FOUND");
+
+      const blockingMilestone = await trx
+        .selectFrom("billingMilestone")
+        .select("id")
+        .where("serviceId", "=", id)
+        .where("collectionStatus", "!=", "to_issue")
+        .executeTakeFirst();
+      if (blockingMilestone) throw new Error("HAS_ISSUED_MILESTONE");
+
+      const blockingPoLine = await trx
+        .selectFrom("purchaseOrderLine")
+        .select("id")
+        .where("serviceId", "=", id)
+        .where("invoicedAmount", ">", "0")
+        .executeTakeFirst();
+      if (blockingPoLine) throw new Error("HAS_INVOICED_PO");
+
+      await trx.deleteFrom("timeEntry").where("serviceId", "=", id).execute();
+      await trx.deleteFrom("hoursForecast").where("serviceId", "=", id).execute();
+      await trx.deleteFrom("billingMilestone").where("serviceId", "=", id).execute();
+      await trx.deleteFrom("purchaseOrderLine").where("serviceId", "=", id).execute();
+      await trx.deleteFrom("assignment").where("serviceId", "=", id).execute();
+      await trx.deleteFrom("phase").where("serviceId", "=", id).execute();
+      await trx.deleteFrom("service").where("id", "=", id).execute();
+    });
+
+    return { status: "success" };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (message === "SERVICE_NOT_FOUND") return { status: "error", error: "Servizio non trovato." };
+    if (message === "HAS_ISSUED_MILESTONE") {
+      return { status: "error", error: "Non eliminabile: ci sono SAL già emessi o incassati su questo servizio." };
+    }
+    if (message === "HAS_INVOICED_PO") {
+      return { status: "error", error: "Non eliminabile: ci sono righe ODA già fatturate dal fornitore su questo servizio." };
+    }
+    return { status: "error", error: "Errore imprevisto durante l'eliminazione. Riprova." };
+  }
+}

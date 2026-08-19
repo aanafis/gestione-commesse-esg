@@ -32,7 +32,7 @@ npx kysely-codegen --url "$env:DATABASE_URL" --out-file "src\lib\db\types.ts" --
 ## Stato di avanzamento (SPEC.md §0)
 
 - [x] 1. Schema database + migration + seed
-- [x] 2. Schermate di sola lettura — **Cruscotto** (`/`), **Servizi** (`/servizi`), **Scheda servizio** (`/servizi/[id]`), **Controllo ore** (`/controllo-ore`)
+- [x] 2. Schermate di sola lettura — **Cruscotto** (`/`), **Commesse** (`/commesse`, tutte le commesse con quadratura §5), **Servizi** (`/servizi`), **Scheda servizio** (`/servizi/[id]`), **Controllo ore** (`/controllo-ore`)
 - [x] 3. Maschere di inserimento dati — tutte fatte: Nuova commessa, Nuovo servizio, Assegna risorsa, Nuovo ODA, Aggiorna avanzamento fase, Previsione trimestrale, **Import ore da CSV** (`/ore/importa`, mappatura colonne + anteprima + upsert), **Registra ore** (`/ore/nuova`, singola riga a mano — upsert su servizio+persona+mese solo tra righe manuali, non tocca mai le righe da import)
 - [x] 4. Autenticazione — magic link (`/login`), sessione JWT nel cookie, `created_by`/`updated_by`/`recorded_by_id` ora valorizzati su tutte le maschere
 - [x] 5. Deployment — **https://gestione-commesse-esg.vercel.app**, GitHub → Vercel collegati (push su `main` pubblica da solo)
@@ -91,6 +91,16 @@ server (mai fidarsi solo del client) e messaggi di errore in italiano.
 `created_by`/`updated_by`/`recorded_by_id` sono valorizzati dalla sessione
 autenticata (vedi sotto) — ogni azione parte con `const session = await
 getSession(); if (!session) return {status:"error", ...}`.
+
+Modifica e cancellazione (richieste dall'utente dopo il pilota): Servizio
+(`/servizi/[id]/modifica`) e Assegnazione (`/assegnazioni/[id]/modifica`)
+hanno una maschera dedicata — identità (commessa/codice, persona/servizio)
+non modificabile da lì, solo gli attributi. La cancellazione di un servizio
+(bottone nella stessa pagina di modifica, dietro conferma) elimina a cascata
+tutto ciò che dipende dal servizio (fasi, assegnazioni, ore, previsioni,
+righe ODA/SAL non ancora fatturate) — bloccata se esistono SAL già emessi/
+incassati o righe ODA già fatturate dal fornitore, eventi fiscali reali che
+un DELETE non annullerebbe nella realtà.
 
 ## Autenticazione (§7)
 

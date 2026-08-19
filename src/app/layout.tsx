@@ -25,6 +25,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 <Link href="/" className="hover:text-ink-primary">
                   Cruscotto
                 </Link>
+                <Link href="/commesse" className="hover:text-ink-primary">
+                  Commesse
+                </Link>
                 <Link href="/servizi" className="hover:text-ink-primary">
                   Servizi
                 </Link>
