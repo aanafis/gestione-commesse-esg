@@ -71,6 +71,25 @@ export function formatDate(v: Date | string | null | undefined): string {
   return Number.isNaN(d.getTime()) ? "–" : dateFmt.format(d);
 }
 
+/** Numero "grezzo" per l'export CSV (§6.2) — virgola decimale (Excel IT),
+ * niente simbolo di valuta né separatore delle migliaia come formatMoney,
+ * così Excel lo riconosce come numero e ci si può fare una tabella pivot.
+ * Riparte dalla stringa originale del NUMERIC, non da toNumber()+toString():
+ * evita di reintrodurre imprecisioni in virgola mobile su un valore che
+ * arriva già come decimale esatto dal database. */
+export function csvNumber(v: Num): string {
+  if (v === null || v === undefined) return "";
+  return String(v).replace(".", ",");
+}
+
+/** Frazione decimale (0.305) in punti percentuali per il CSV ("30,50"),
+ * coerente con come si leggono normalmente ("margine al 30%") — a
+ * differenza della cella grezza, qui moltiplichiamo per 100. */
+export function csvPercent(v: Num): string {
+  const n = toNumber(v);
+  return n === null ? "" : (n * 100).toFixed(2).replace(".", ",");
+}
+
 /**
  * Converte una DATE del database nel formato "YYYY-MM-DD" richiesto dal
  * value di <input type="date">. Stessa regola delle altre funzioni qui

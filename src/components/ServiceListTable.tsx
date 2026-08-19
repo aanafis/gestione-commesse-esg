@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { AlertChip } from "@/components/AlertChip";
-import { formatHours, formatMoney, formatPercent, toNumber } from "@/lib/format";
+import { csvNumber, csvPercent, formatHours, formatMoney, formatPercent, toNumber } from "@/lib/format";
+import { downloadCsv, rowsToCsv } from "@/lib/csv-export";
 import { SERVICE_STATUS_LABELS, label } from "@/lib/labels";
 import type { ServiceListRow } from "@/lib/queries/service-list";
 
@@ -18,29 +19,75 @@ function uniqueSorted(values: (string | null)[]): string[] {
   );
 }
 
+/** null su entrambi gli estremi = nessun filtro attivo su questa colonna,
+ * valore null nel dato = escluso solo se il filtro è davvero attivo. */
+function inRange(value: number | null, min: number | null, max: number | null): boolean {
+  if (min === null && max === null) return true;
+  if (value === null) return false;
+  if (min !== null && value < min) return false;
+  if (max !== null && value > max) return false;
+  return true;
+}
+
+function parseRangeInput(v: string): number | null {
+  if (v.trim() === "") return null;
+  const n = Number(v.replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+}
+
 export function ServiceListTable({ rows }: { rows: ServiceListRow[] }) {
   const [status, setStatus] = useState(ALL);
   const [pm, setPm] = useState(ALL);
   const [serviceType, setServiceType] = useState(ALL);
+  const [variant, setVariant] = useState(ALL);
   const [alert, setAlert] = useState(ALL);
   const [client, setClient] = useState(ALL);
+  const [codeSearch, setCodeSearch] = useState("");
+  const [commessaSearch, setCommessaSearch] = useState("");
+
+  const [marginMin, setMarginMin] = useState("");
+  const [marginMax, setMarginMax] = useState("");
+  const [discountMin, setDiscountMin] = useState("");
+  const [discountMax, setDiscountMax] = useState("");
+  const [hoursVarMin, setHoursVarMin] = useState("");
+  const [hoursVarMax, setHoursVarMax] = useState("");
+  const [priceMin, setPriceMin] = useState("");
+  const [priceMax, setPriceMax] = useState("");
+
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
   const statuses = useMemo(() => uniqueSorted(rows.map((r) => r.status)), [rows]);
   const pms = useMemo(() => uniqueSorted(rows.map((r) => r.pmName)), [rows]);
   const serviceTypes = useMemo(() => uniqueSorted(rows.map((r) => r.serviceTypeName)), [rows]);
+  const variants = useMemo(() => uniqueSorted(rows.map((r) => r.variant)), [rows]);
   const alerts = useMemo(() => uniqueSorted(rows.map((r) => r.alert)), [rows]);
   const clients = useMemo(() => uniqueSorted(rows.map((r) => r.clientName)), [rows]);
 
   const filtered = useMemo(() => {
+    const marginMinN = parseRangeInput(marginMin) !== null ? parseRangeInput(marginMin)! / 100 : null;
+    const marginMaxN = parseRangeInput(marginMax) !== null ? parseRangeInput(marginMax)! / 100 : null;
+    const discountMinN = parseRangeInput(discountMin) !== null ? parseRangeInput(discountMin)! / 100 : null;
+    const discountMaxN = parseRangeInput(discountMax) !== null ? parseRangeInput(discountMax)! / 100 : null;
+    const hoursVarMinN = parseRangeInput(hoursVarMin);
+    const hoursVarMaxN = parseRangeInput(hoursVarMax);
+    const priceMinN = parseRangeInput(priceMin);
+    const priceMaxN = parseRangeInput(priceMax);
+
     let result = rows.filter(
       (r) =>
         (status === ALL || r.status === status) &&
         (pm === ALL || r.pmName === pm) &&
         (serviceType === ALL || r.serviceTypeName === serviceType) &&
+        (variant === ALL || r.variant === variant) &&
         (alert === ALL || r.alert === alert) &&
-        (client === ALL || r.clientName === client)
+        (client === ALL || r.clientName === client) &&
+        (codeSearch === "" || r.code.toLowerCase().includes(codeSearch.toLowerCase())) &&
+        (commessaSearch === "" || r.commessaCode.toLowerCase().includes(commessaSearch.toLowerCase())) &&
+        inRange(toNumber(r.marginPct), marginMinN, marginMaxN) &&
+        inRange(toNumber(r.discountPct), discountMinN, discountMaxN) &&
+        inRange(toNumber(r.hoursVariance), hoursVarMinN, hoursVarMaxN) &&
+        inRange(toNumber(r.contractedPrice), priceMinN, priceMaxN)
     );
 
     if (sortKey) {
@@ -51,7 +98,11 @@ export function ServiceListTable({ rows }: { rows: ServiceListRow[] }) {
       });
     }
     return result;
-  }, [rows, status, pm, serviceType, alert, client, sortKey, sortDir]);
+  }, [
+    rows, status, pm, serviceType, variant, alert, client, codeSearch, commessaSearch,
+    marginMin, marginMax, discountMin, discountMax, hoursVarMin, hoursVarMax, priceMin, priceMax,
+    sortKey, sortDir,
+  ]);
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
@@ -67,14 +118,50 @@ export function ServiceListTable({ rows }: { rows: ServiceListRow[] }) {
     return <span className="ml-1 text-ink-muted">{sortDir === "asc" ? "▲" : "▼"}</span>;
   }
 
+  function exportCsv() {
+    const headers = [
+      "Servizio", "Commessa", "Cliente", "Tipo", "Variante", "PM", "Stato", "Alert",
+      "Margine %", "Sconto %", "Scostamento ore", "Prezzo contrattualizzato",
+    ];
+    const csvRows = filtered.map((r) => [
+      r.code,
+      r.commessaCode,
+      r.clientName,
+      r.serviceTypeName,
+      r.variant ?? "",
+      r.pmName ?? "",
+      label(SERVICE_STATUS_LABELS, r.status),
+      r.alert ?? "",
+      csvPercent(r.marginPct),
+      csvPercent(r.discountPct),
+      csvNumber(r.hoursVariance),
+      csvNumber(r.contractedPrice),
+    ]);
+    downloadCsv("servizi.csv", rowsToCsv(headers, csvRows));
+  }
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-end gap-3">
+        <TextFilter label="Codice servizio" value={codeSearch} onChange={setCodeSearch} />
+        <TextFilter label="Codice commessa" value={commessaSearch} onChange={setCommessaSearch} />
         <FilterSelect label="Stato" value={status} onChange={setStatus} options={statuses} display={(v) => label(SERVICE_STATUS_LABELS, v)} />
         <FilterSelect label="PM" value={pm} onChange={setPm} options={pms} />
         <FilterSelect label="Tipo servizio" value={serviceType} onChange={setServiceType} options={serviceTypes} />
+        <FilterSelect label="Variante" value={variant} onChange={setVariant} options={variants} />
         <FilterSelect label="Alert" value={alert} onChange={setAlert} options={alerts} />
         <FilterSelect label="Cliente" value={client} onChange={setClient} options={clients} />
+        <RangeFilter label="Margine % (min–max)" min={marginMin} max={marginMax} onMinChange={setMarginMin} onMaxChange={setMarginMax} />
+        <RangeFilter label="Sconto % (min–max)" min={discountMin} max={discountMax} onMinChange={setDiscountMin} onMaxChange={setDiscountMax} />
+        <RangeFilter label="Scostamento ore (min–max)" min={hoursVarMin} max={hoursVarMax} onMinChange={setHoursVarMin} onMaxChange={setHoursVarMax} />
+        <RangeFilter label="Prezzo contratt. (min–max)" min={priceMin} max={priceMax} onMinChange={setPriceMin} onMaxChange={setPriceMax} step="100" />
+        <button
+          type="button"
+          onClick={exportCsv}
+          className="ml-auto rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium text-ink-primary hover:border-accent"
+        >
+          Esporta CSV
+        </button>
       </div>
 
       <p className="text-xs text-ink-muted">
@@ -181,5 +268,61 @@ function FilterSelect({
         ))}
       </select>
     </label>
+  );
+}
+
+function TextFilter({ label: labelText, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <label className="flex flex-col gap-1 text-xs text-ink-secondary">
+      {labelText}
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="cerca…"
+        className="w-32 rounded-md border border-border bg-surface px-2 py-1.5 text-sm text-ink-primary"
+      />
+    </label>
+  );
+}
+
+function RangeFilter({
+  label: labelText,
+  min,
+  max,
+  onMinChange,
+  onMaxChange,
+  step = "1",
+}: {
+  label: string;
+  min: string;
+  max: string;
+  onMinChange: (v: string) => void;
+  onMaxChange: (v: string) => void;
+  step?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1 text-xs text-ink-secondary">
+      <span>{labelText}</span>
+      <div className="flex items-center gap-1">
+        <input
+          type="number"
+          step={step}
+          value={min}
+          onChange={(e) => onMinChange(e.target.value)}
+          placeholder="min"
+          className="w-20 rounded-md border border-border bg-surface px-2 py-1.5 text-sm text-ink-primary"
+        />
+        <span>–</span>
+        <input
+          type="number"
+          step={step}
+          value={max}
+          onChange={(e) => onMaxChange(e.target.value)}
+          placeholder="max"
+          className="w-20 rounded-md border border-border bg-surface px-2 py-1.5 text-sm text-ink-primary"
+        />
+      </div>
+    </div>
   );
 }
