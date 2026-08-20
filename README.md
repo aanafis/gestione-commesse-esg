@@ -32,7 +32,7 @@ npx kysely-codegen --url "$env:DATABASE_URL" --out-file "src\lib\db\types.ts" --
 ## Stato di avanzamento (SPEC.md §0)
 
 - [x] 1. Schema database + migration + seed
-- [x] 2. Schermate di sola lettura — **Cruscotto** (`/`), **Commesse** (`/commesse`, tutte le commesse con quadratura §5), **Servizi** (`/servizi`), **Scheda servizio** (`/servizi/[id]`), **Controllo ore** (`/controllo-ore`), **Mappa progetti** (`/mappa`, un pin per commessa con indirizzo geocodificato). Commesse e Servizi hanno filtri su tutte le colonne (a tendina per le categoriche, ricerca testo per i codici, min/max per le numeriche) ed **export CSV** delle righe filtrate.
+- [x] 2. Schermate di sola lettura — **Cruscotto** (`/`, ridisegnato a card/grafici — vedi sotto), **Commesse** (`/commesse`, tutte le commesse con quadratura §5), **Servizi** (`/servizi`), **Scheda servizio** (`/servizi/[id]`), **Controllo ore** (`/controllo-ore`), **Mappa progetti** (`/mappa`, un pin per commessa con indirizzo geocodificato). Commesse e Servizi hanno filtri su tutte le colonne (a tendina per le categoriche, ricerca testo per i codici, min/max per le numeriche) ed **export CSV** delle righe filtrate.
 - [x] 3. Maschere di inserimento dati — tutte fatte: Nuova commessa, Nuovo servizio, Assegna risorsa, Nuovo ODA, Aggiorna avanzamento fase, Previsione trimestrale, **Import ore da CSV** (`/ore/importa`, mappatura colonne + anteprima + upsert), **Registra ore** (`/ore/nuova`, singola riga a mano — upsert su servizio+persona+mese solo tra righe manuali, non tocca mai le righe da import)
 - [x] 4. Autenticazione — magic link (`/login`), sessione JWT nel cookie, `created_by`/`updated_by`/`recorded_by_id` ora valorizzati su tutte le maschere
 - [x] 5. Deployment — **https://gestione-commesse-esg.vercel.app**, GitHub → Vercel collegati (push su `main` pubblica da solo)
@@ -54,6 +54,25 @@ wrapper `react-leaflet`: evita le sottigliezze SSR/hydration attorno a una
 libreria che richiede `window`, e i marker sono cerchi colorati disegnati
 inline invece dei pin di default di Leaflet (i cui percorsi immagine non si
 risolvono bene con il bundler di Next.js/Turbopack).
+
+## Cruscotto — impaginazione a card (§6.1)
+
+Richiesta dall'utente ("un po' asettico"): stessi dati e stessa palette di
+prima (nessun colore nuovo, nessuna vista/query nuova — solo come vengono
+mostrati), riorganizzati in card con ombra (`.card-shadow` in globals.css),
+azioni rapide in alto, e due grafici a barre orizzontali al posto di lunghe
+liste di numeri: margine per tipo di servizio (colorato sulla stessa soglia
+di `v_service_alert`, §5: sotto 10% = critico) e utilizzo squadra. Le barre
+gestiscono anche valori negativi (una barra che cresce a sinistra dello
+zero, non troncata a 0) — necessario perché un margine può essere negativo.
+
+Componenti in `src/components/dashboard/` — distinti da `Card`/`StatTile`
+già usati altrove (Scheda servizio), non li sostituiscono: il resto
+dell'app resta con il proprio look finché non verrà chiesto altrettanto lì.
+
+Prima di toccare il codice, la nuova impaginazione è stata approvata come
+mockup HTML statico (stessi token colore, dati reali) — utile per iterare
+velocemente su un cambio visivo prima di portarlo nell'app vera.
 
 ## PDF dell'ODA
 

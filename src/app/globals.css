@@ -66,3 +66,25 @@ body {
   font-family:
     system-ui, -apple-system, "Segoe UI", sans-serif;
 }
+
+/* Ombra leggera per le card del Cruscotto (§6.1) — un filo di profondità
+   in più rispetto al solo bordo usato altrove, non un token colore quindi
+   fuori dal namespace @theme: la differenza chiaro/scuro basta qui una
+   normale regola CSS annidata come già fa body{} sopra. */
+.card-shadow {
+  box-shadow:
+    0 1px 2px rgba(11, 11, 11, 0.04),
+    0 1px 8px rgba(11, 11, 11, 0.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .card-shadow {
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.3),
+      0 2px 12px rgba(0, 0, 0, 0.3);
+  }
+}
+:root[data-theme="dark"] .card-shadow {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 2px 12px rgba(0, 0, 0, 0.3);
+}
