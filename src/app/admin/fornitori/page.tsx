@@ -21,7 +21,7 @@ export default async function FornitoriPage() {
         getRowKey={(r) => r.id}
         emptyLabel="Nessun fornitore ancora."
         columns={[
-          { key: "code", label: "Codice", render: (r) => <Link href={`/admin/fornitori/${r.id}`} className="hover:underline">{r.code}</Link> },
+          { key: "code", label: "Codice", render: (r) => <Link href={`/admin/fornitori/${r.id}/scheda`} className="hover:underline">{r.code}</Link> },
           { key: "name", label: "Ragione sociale" },
           { key: "category", label: "Categoria", render: (r) => label(SUPPLIER_CATEGORY_LABELS, r.category) },
           { key: "contactName", label: "Referente", render: (r) => r.contactName ?? "–" },
