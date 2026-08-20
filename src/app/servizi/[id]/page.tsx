@@ -72,6 +72,9 @@ export default async function ServiceDetailPage(props: PageProps<"/servizi/[id]"
           <Link href={`/servizi/${id}/modifica`} className="text-sm text-accent hover:underline">
             Modifica
           </Link>
+          <Link href={`/oda/nuovo?serviceId=${id}`} className="text-sm text-accent hover:underline">
+            + Collega fornitore
+          </Link>
         </div>
         <p className="text-sm text-ink-secondary">
           {header.serviceTypeName}

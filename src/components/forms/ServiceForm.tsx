@@ -105,6 +105,9 @@ function ServiceFormInner({
           <Link href={`/servizi/${state.createdId}`} className="text-sm text-accent hover:underline">
             Vai alla scheda servizio
           </Link>
+          <Link href={`/oda/nuovo?serviceId=${state.createdId}`} className="text-sm text-accent hover:underline">
+            Collega un fornitore (ODA)
+          </Link>
           <button type="button" onClick={onCreateAnother} className="text-sm text-ink-secondary hover:underline">
             Crea un altro servizio
           </button>
