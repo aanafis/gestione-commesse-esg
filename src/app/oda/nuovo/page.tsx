@@ -12,6 +12,8 @@ export default async function NuovoOdaPage(props: PageProps<"/oda/nuovo">) {
   const searchParams = await props.searchParams;
   const initialServiceId =
     typeof searchParams.serviceId === "string" ? searchParams.serviceId : undefined;
+  const initialSupplierId =
+    typeof searchParams.supplierId === "string" ? searchParams.supplierId : undefined;
 
   const [suppliers, services, approvers, thresholds] = await Promise.all([
     getSuppliersForSelect(),
@@ -41,6 +43,7 @@ export default async function NuovoOdaPage(props: PageProps<"/oda/nuovo">) {
           approvers={approvers}
           thresholds={thresholds}
           initialServiceId={initialServiceId}
+          initialSupplierId={initialSupplierId}
         />
       )}
     </div>

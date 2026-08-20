@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   createPurchaseOrder,
@@ -23,12 +24,56 @@ export function PurchaseOrderForm({
   approvers,
   thresholds,
   initialServiceId,
+  initialSupplierId,
 }: {
   suppliers: { id: string; code: string; name: string }[];
   services: { id: string; code: string; commessaCode: string }[];
   approvers: { id: string; name: string }[];
   thresholds: { pm: string; director: string };
   initialServiceId?: string;
+  initialSupplierId?: string;
+}) {
+  // Chiave di remount: "Registra un altro ordine" (sotto) non deve dipendere
+  // dal cambio di URL — stessa causa già vista su AssignmentForm/CommessaForm/
+  // ServiceForm/PhaseProgressForm: React non rimonta questo componente solo
+  // perché i props sono cambiati, quindi useActionState restava a "success"
+  // per sempre e il click sembrava non fare nulla.
+  const [instance, setInstance] = useState({ key: 0, serviceId: initialServiceId, supplierId: initialSupplierId });
+  const router = useRouter();
+
+  return (
+    <PurchaseOrderFormInner
+      key={instance.key}
+      suppliers={suppliers}
+      services={services}
+      approvers={approvers}
+      thresholds={thresholds}
+      initialServiceId={instance.serviceId}
+      initialSupplierId={instance.supplierId}
+      onRegisterAnother={(supplierId) => {
+        router.refresh();
+        setInstance((i) => ({ key: i.key + 1, serviceId: undefined, supplierId }));
+      }}
+    />
+  );
+}
+
+function PurchaseOrderFormInner({
+  suppliers,
+  services,
+  approvers,
+  thresholds,
+  initialServiceId,
+  initialSupplierId,
+  onRegisterAnother,
+}: {
+  suppliers: { id: string; code: string; name: string }[];
+  services: { id: string; code: string; commessaCode: string }[];
+  approvers: { id: string; name: string }[];
+  thresholds: { pm: string; director: string };
+  initialServiceId?: string;
+  initialSupplierId?: string;
+  onRegisterAnother: (supplierId: string | undefined) => void;
 }) {
   const [state, formAction, pending] = useActionState(createPurchaseOrder, INITIAL_STATE);
   const [lines, setLines] = useState<PurchaseOrderLineInput[]>([emptyLine(initialServiceId)]);
@@ -75,9 +120,13 @@ export function PurchaseOrderForm({
           .
         </p>
         <div className="flex gap-3">
-          <Link href="/oda/nuovo" className="text-sm text-accent hover:underline">
+          <button
+            type="button"
+            onClick={() => onRegisterAnother(state.createdSupplierId)}
+            className="text-sm text-accent hover:underline"
+          >
             Registra un altro ordine
-          </Link>
+          </button>
         </div>
       </div>
     );
@@ -99,7 +148,7 @@ export function PurchaseOrderForm({
           <TextInput id="number" name="number" defaultValue={state.values?.number ?? ""} />
         </Field>
         <Field label="Fornitore" htmlFor="supplierId" error={err.supplierId}>
-          <Select id="supplierId" name="supplierId" defaultValue={state.values?.supplierId ?? ""}>
+          <Select id="supplierId" name="supplierId" defaultValue={state.values?.supplierId ?? initialSupplierId ?? ""}>
             <option value="">Seleziona…</option>
             {suppliers.map((s) => (
               <option key={s.id} value={s.id}>

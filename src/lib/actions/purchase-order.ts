@@ -40,6 +40,7 @@ export type PurchaseOrderFormState = {
   values?: PurchaseOrderFormValues;
   createdId?: string;
   createdNumber?: string;
+  createdSupplierId?: string;
   approvalLevel?: string;
 };
 
@@ -177,6 +178,7 @@ export async function createPurchaseOrder(
       status: "success",
       createdId: result.id,
       createdNumber: result.number,
+      createdSupplierId: values.supplierId,
       approvalLevel: result.approvalLevel ?? undefined,
     };
   } catch (err) {

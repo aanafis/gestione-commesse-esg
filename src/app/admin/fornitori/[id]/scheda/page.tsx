@@ -42,9 +42,17 @@ export default async function SchedaFornitorePage(props: PageProps<"/admin/forni
           <h1 className="text-2xl font-semibold text-ink-primary">{supplier.name}</h1>
           <p className="text-sm text-ink-secondary">{label(SUPPLIER_CATEGORY_LABELS, supplier.category)}</p>
         </div>
-        <Link href={`/admin/fornitori/${id}`} className="text-sm text-accent hover:underline">
-          Modifica anagrafica
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href={`/oda/nuovo?supplierId=${id}`}
+            className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-white"
+          >
+            + Collega un servizio
+          </Link>
+          <Link href={`/admin/fornitori/${id}`} className="text-sm text-accent hover:underline">
+            Modifica anagrafica
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

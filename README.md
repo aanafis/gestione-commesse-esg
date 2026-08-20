@@ -63,7 +63,9 @@ Persone (livello/ruolo/accesso al login), Clienti, **Fornitori** (il
 codice in elenco apre la **Scheda fornitore** — commesse/servizi coinvolti,
 ordini di acquisto e stato pagamenti raggruppati per consulente esterno,
 richiesta dall'utente; "Modifica anagrafica" resta una pagina separata,
-come per il Servizio), **Tipi di
+come per il Servizio; "+ Collega un servizio" apre "Nuovo ODA" con questo
+fornitore già preselezionato — collegare un servizio a un fornitore, come
+richiesto dall'utente, è semplicemente registrare un ODA tra i due), **Tipi di
 servizio** (l'elenco a tendina di "Nuovo servizio" — LEED, WELL, CRREM...
 — estendibile in autonomia), Template fasi (con controllo somma quote =
 100%; "+ Nuova fase" crea anche un template per un tipo di servizio appena
