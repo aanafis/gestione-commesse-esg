@@ -115,9 +115,12 @@ export function getPurchaseOrderLines(id: string) {
     .innerJoin("supplier as s", "s.id", "po.supplierId")
     .select([
       "l.lineId",
+      "po.id as purchaseOrderId",
       "po.number",
       "s.name as supplierName",
       "po.status as poStatus",
+      "po.pdfFilename",
+      "po.pdfUploadedAt",
       "l.phaseRef",
       "l.description",
       "l.consultantCost",

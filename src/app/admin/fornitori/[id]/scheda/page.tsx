@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Breakdown, BreakdownRow, Card } from "@/components/Breakdown";
 import { StatTile } from "@/components/StatTile";
 import { DataTable } from "@/components/DataTable";
+import { PurchaseOrderPdfControl } from "@/components/forms/PurchaseOrderPdfControl";
 import { getSupplierHeader, getSupplierPurchaseOrderLines } from "@/lib/queries/supplier-detail";
 import { formatMoney, formatMultiplier } from "@/lib/format";
 import { PO_STATUS_LABELS, SUPPLIER_CATEGORY_LABELS, label } from "@/lib/labels";
@@ -126,6 +127,17 @@ export default async function SchedaFornitorePage(props: PageProps<"/admin/forni
                   : "–",
             },
             { key: "isCommitted", label: "Impegnato", render: (r) => (r.isCommitted ? "Sì" : "No") },
+            {
+              key: "pdf",
+              label: "PDF ODA",
+              render: (r) => (
+                <PurchaseOrderPdfControl
+                  purchaseOrderId={String(r.purchaseOrderId)}
+                  pdfFilename={r.pdfFilename}
+                  pdfUploadedAt={r.pdfUploadedAt}
+                />
+              ),
+            },
           ]}
         />
       </div>

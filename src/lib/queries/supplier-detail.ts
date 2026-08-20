@@ -21,6 +21,8 @@ export function getSupplierPurchaseOrderLines(id: string) {
       "po.number",
       "po.status as poStatus",
       "po.issueDate",
+      "po.pdfFilename",
+      "po.pdfUploadedAt",
       "s.id as serviceId",
       "s.code as serviceCode",
       "c.code as commessaCode",

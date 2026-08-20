@@ -215,6 +215,10 @@ export interface PurchaseOrder {
   issueDate: Timestamp | null;
   notes: string | null;
   number: string;
+  pdfData: Buffer | null;
+  pdfFilename: string | null;
+  pdfUploadedAt: Timestamp | null;
+  pdfUploadedBy: Int8 | null;
   status: Generated<PoStatus>;
   supplierId: Int8;
   updatedAt: Generated<Timestamp>;

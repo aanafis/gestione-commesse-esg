@@ -55,6 +55,29 @@ libreria che richiede `window`, e i marker sono cerchi colorati disegnati
 inline invece dei pin di default di Leaflet (i cui percorsi immagine non si
 risolvono bene con il bundler di Next.js/Turbopack).
 
+## PDF dell'ODA
+
+Richiesta dall'utente: salvare il PDF dell'ordine di acquisto emesso.
+Salvato come `bytea` in Postgres (colonne `pdf_data`/`pdf_filename`/
+`pdf_uploaded_at`/`pdf_uploaded_by` su `purchase_order`) — non su uno
+storage esterno (Vercel Blob, S3...): zero servizi/chiavi nuove da
+configurare, stessa scelta di semplicità già fatta altrove (OpenStreetMap
+invece di Google Maps, CSV invece di xlsx). Un file per **ordine**, non per
+riga: un ordine può coprire più servizi (§4.2) ma è un solo documento
+firmato — lo stesso controllo compare identico su ogni riga dello stesso
+ordine (`PurchaseOrderPdfControl`, sia nel tab ODA della Scheda servizio
+sia nella Scheda fornitore).
+
+Il download passa da una **Route Handler** (`/oda/[id]/pdf`), non da una
+Server Action: serve restituire bytes grezzi con `Content-Type`/
+`Content-Disposition`, cosa che un'azione non può fare — stessa sessione
+controllata con `getSession()`, nessun accesso anonimo al PDF.
+
+Limite Server Action alzato da 1MB (default Next.js) a 10MB in
+`next.config.ts` per accettare l'upload — l'azione stessa rifiuta file
+oltre 8MB, con un margine sotto il limite per l'overhead di
+multipart/form-data.
+
 ## Admin (§6.6)
 
 `/admin` — riservato al ruolo `admin` (verificato sia dal layout che da ogni
@@ -65,7 +88,9 @@ ordini di acquisto e stato pagamenti raggruppati per consulente esterno,
 richiesta dall'utente; "Modifica anagrafica" resta una pagina separata,
 come per il Servizio; "+ Collega un servizio" apre "Nuovo ODA" con questo
 fornitore già preselezionato — collegare un servizio a un fornitore, come
-richiesto dall'utente, è semplicemente registrare un ODA tra i due), **Tipi di
+richiesto dall'utente, è semplicemente registrare un ODA tra i due; ogni
+riga ODA ha anche un controllo per caricare/sostituire/scaricare il PDF
+dell'ordine emesso — vedi "PDF dell'ODA" sotto), **Tipi di
 servizio** (l'elenco a tendina di "Nuovo servizio" — LEED, WELL, CRREM...
 — estendibile in autonomia), Template fasi (con controllo somma quote =
 100%; "+ Nuova fase" crea anche un template per un tipo di servizio appena

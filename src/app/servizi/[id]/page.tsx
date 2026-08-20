@@ -6,6 +6,7 @@ import { StatTile } from "@/components/StatTile";
 import { Tabs } from "@/components/Tabs";
 import { DataTable } from "@/components/DataTable";
 import { PhaseProgressInlineForm } from "@/components/forms/PhaseProgressInlineForm";
+import { PurchaseOrderPdfControl } from "@/components/forms/PurchaseOrderPdfControl";
 import {
   getAssignments,
   getForecasts,
@@ -338,6 +339,17 @@ export default async function ServiceDetailPage(props: PageProps<"/servizi/[id]"
                     { key: "markupApplied", label: "Markup", align: "right", render: (r) => formatMultiplier(r.markupApplied) },
                     { key: "lineMargin", label: "Margine riga", align: "right", render: (r) => formatMoney(r.lineMargin) },
                     { key: "isCommitted", label: "Impegnato", render: (r) => (r.isCommitted ? "Sì" : "No") },
+                    {
+                      key: "pdf",
+                      label: "PDF ODA",
+                      render: (r) => (
+                        <PurchaseOrderPdfControl
+                          purchaseOrderId={String(r.purchaseOrderId)}
+                          pdfFilename={r.pdfFilename}
+                          pdfUploadedAt={r.pdfUploadedAt}
+                        />
+                      ),
+                    },
                   ]}
                 />
               </div>
