@@ -34,3 +34,35 @@ export async function getApprovalThresholds(): Promise<{ pm: string; director: s
     .executeTakeFirst();
   return { pm: s?.pmApprovalThreshold ?? "5000", director: s?.directorApprovalThreshold ?? "15000" };
 }
+
+/** Ordine + le sue righe, per la maschera di modifica — un ordine può
+ * coprire più servizi (§4.2): aggiungere un servizio a un ordine già
+ * emesso è aggiungere una riga qui, non crearne uno nuovo con lo stesso
+ * numero (che il vincolo UNIQUE su number rifiuta di proposito). */
+export async function getPurchaseOrderForEdit(id: string) {
+  const header = await db
+    .selectFrom("purchaseOrder")
+    .select([
+      "id",
+      "number",
+      "supplierId",
+      "description",
+      "status",
+      "issueDate",
+      "expectedDeliveryDate",
+      "approverId",
+      "notes",
+    ])
+    .where("id", "=", id)
+    .executeTakeFirst();
+  if (!header) return null;
+
+  const lines = await db
+    .selectFrom("purchaseOrderLine")
+    .select(["id", "serviceId", "phaseRef", "description", "consultantCost", "rechargedToClient", "invoicedAmount"])
+    .where("purchaseOrderId", "=", id)
+    .orderBy("id")
+    .execute();
+
+  return { ...header, lines };
+}

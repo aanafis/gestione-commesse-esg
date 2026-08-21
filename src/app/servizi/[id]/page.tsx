@@ -350,6 +350,15 @@ export default async function ServiceDetailPage(props: PageProps<"/servizi/[id]"
                         />
                       ),
                     },
+                    {
+                      key: "actions",
+                      label: "",
+                      render: (r) => (
+                        <Link href={`/oda/${r.purchaseOrderId}/modifica`} className="text-accent hover:underline">
+                          Modifica
+                        </Link>
+                      ),
+                    },
                   ]}
                 />
               </div>

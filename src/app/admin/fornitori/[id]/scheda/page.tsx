@@ -138,6 +138,15 @@ export default async function SchedaFornitorePage(props: PageProps<"/admin/forni
                 />
               ),
             },
+            {
+              key: "actions",
+              label: "",
+              render: (r) => (
+                <Link href={`/oda/${r.purchaseOrderId}/modifica`} className="text-accent hover:underline">
+                  Modifica
+                </Link>
+              ),
+            },
           ]}
         />
       </div>

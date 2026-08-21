@@ -74,6 +74,24 @@ Prima di toccare il codice, la nuova impaginazione è stata approvata come
 mockup HTML statico (stessi token colore, dati reali) — utile per iterare
 velocemente su un cambio visivo prima di portarlo nell'app vera.
 
+## Modifica ODA — aggiungere un servizio a un ordine esistente
+
+Richiesta dall'utente: un ordine può coprire più servizi (es. LEED e CRREM
+sullo stesso numero), ma non c'era modo di aggiungerne uno a un ordine già
+creato — solo "Nuovo ODA". Provare a "ricreare" lo stesso numero falliva
+sul vincolo UNIQUE (di proposito: un numero ordine identifica un solo
+documento). `/oda/[id]/modifica` (link "Modifica" nelle tabelle ODA di
+Scheda servizio e Scheda fornitore) risolve aggiungendo/modificando le
+**righe** dell'ordine esistente:
+
+- Le righe si sincronizzano per differenza al salvataggio: quelle con un id
+  vengono aggiornate, quelle senza sono nuove, quelle rimosse dal form
+  vengono cancellate — a meno che abbiano già del fatturato registrato
+  (`invoicedAmount > 0`): quello è un evento fiscale reale, la cancellazione
+  viene rifiutata invece di procedere silenziosamente.
+- Il messaggio d'errore su numero duplicato ora indica esplicitamente di
+  aprire l'ordine esistente invece di crearne uno nuovo.
+
 ## PDF dell'ODA
 
 Richiesta dall'utente: salvare il PDF dell'ordine di acquisto emesso.
