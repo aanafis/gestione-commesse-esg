@@ -40,5 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Claude Code — impostazioni locali, non condivise
+# Claude Code — impostazioni e stato locali, non condivisi
 .claude/settings.local.json
+.claude/scheduled_tasks.lock
