@@ -1,5 +1,6 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import type { ServiceStatus } from "@/lib/db/types";
 import { getSession } from "@/lib/auth/dal";
@@ -336,8 +337,11 @@ export async function updateService(
 // e ODA non ancora fatturati sono invece puri dati di pianificazione interna
 // e si possono cancellare senza rischio.
 
+// Nessuno stato "success": in caso di esito positivo l'azione fa redirect()
+// (vedi sotto) invece di restituire uno stato — il componente non arriva
+// mai a vedere un valore diverso da "idle"/"error".
 export type DeleteServiceFormState = {
-  status: "idle" | "error" | "success";
+  status: "idle" | "error";
   error?: string;
 };
 
@@ -384,8 +388,6 @@ export async function deleteService(
       await trx.deleteFrom("phase").where("serviceId", "=", id).execute();
       await trx.deleteFrom("service").where("id", "=", id).execute();
     });
-
-    return { status: "success" };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     if (message === "SERVICE_NOT_FOUND") return { status: "error", error: "Servizio non trovato." };
@@ -397,4 +399,16 @@ export async function deleteService(
     }
     return { status: "error", error: "Errore imprevisto durante l'eliminazione. Riprova." };
   }
+
+  // Redirect lato server, fuori dal try/catch: la pagina corrente è
+  // /servizi/[id], che dopo la cancellazione richiama notFound() al primo
+  // re-render automatico che Next fa dopo ogni Server Action — un
+  // router.push() lato client (come si faceva prima) arriva sempre troppo
+  // tardi e l'utente vede un 404 per una frazione di secondo prima del
+  // redirect, o a volte il 404 resta la pagina finale. redirect() qui,
+  // invece, sostituisce la route corrente prima che quel re-render avvenga.
+  // Deve stare fuori dal try/catch: redirect() lancia internamente
+  // un'eccezione speciale (NEXT_REDIRECT) che il catch qui sopra
+  // intercetterebbe per errore, trasformandola in "Errore imprevisto".
+  redirect("/servizi");
 }

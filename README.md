@@ -164,6 +164,23 @@ riga per riga sarebbe rumore; le tendine di selezione servizio/commessa nei
 form di inserimento; le anagrafiche admin (clienti, persone, tipi di
 servizio, template fasi, livelli), che non elencano servizi o commesse.
 
+## Bug: 404 dopo aver eliminato un servizio
+
+Segnalato dall'utente: cancellando un servizio da `/servizi/[id]/modifica`
+compariva un 404 invece di tornare all'elenco. Causa: `deleteService`
+restituiva `{status:"success"}` e un `useEffect` lato client faceva
+`router.push("/servizi")` — ma dopo una Server Action Next.js ri-renderizza
+subito la pagina corrente, che qui è proprio la scheda del servizio appena
+cancellato: la sua query non trova più nulla e chiama `notFound()` prima che
+il redirect del client riesca a scattare.
+
+Fix: `deleteService` ora fa `redirect("/servizi")` lato server, fuori dal
+`try/catch` (il `redirect()` di Next lancia un'eccezione speciale che il
+catch intercetterebbe per errore, trasformando un successo in "Errore
+imprevisto"). Stesso principio già usato in `confirmMagicLink` — se
+un'azione elimina la risorsa che la pagina corrente sta mostrando, il
+redirect dev'essere lato server, non un effetto lato client dopo il fatto.
+
 ## Admin (§6.6)
 
 `/admin` — riservato al ruolo `admin` (verificato sia dal layout che da ogni

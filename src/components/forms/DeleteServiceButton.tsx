@@ -1,18 +1,16 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useActionState } from "react";
 import { deleteService, type DeleteServiceFormState } from "@/lib/actions/service";
 
 const INITIAL_STATE: DeleteServiceFormState = { status: "idle" };
 
 export function DeleteServiceButton({ serviceId, serviceCode }: { serviceId: string; serviceCode: string }) {
+  // Nessun redirect lato client al successo: deleteService fa redirect()
+  // lato server (vedi il commento in src/lib/actions/service.ts) — un
+  // router.push() qui arriverebbe dopo che la pagina, ricaricando dati di
+  // un servizio ormai cancellato, ha già mostrato un 404.
   const [state, formAction, pending] = useActionState(deleteService, INITIAL_STATE);
-  const router = useRouter();
-
-  useEffect(() => {
-    if (state.status === "success") router.push("/servizi");
-  }, [state.status, router]);
 
   return (
     <div className="flex flex-col items-start gap-1 rounded-lg border border-status-critical/30 bg-status-critical/5 p-4">
