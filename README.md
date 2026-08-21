@@ -74,6 +74,19 @@ Prima di toccare il codice, la nuova impaginazione è stata approvata come
 mockup HTML statico (stessi token colore, dati reali) — utile per iterare
 velocemente su un cambio visivo prima di portarlo nell'app vera.
 
+## Controllo ore — riepilogo per commessa + una riga per persona (§6.4)
+
+Richiesto dall'utente: una tabella "Per commessa" prima di "Per servizio"
+(v_commessa_hours_metrics, nuova vista — somma dei servizi non chiusi,
+avanzamento % come media pesata sulle ore stimate, non una media delle
+medie); e "Per persona" con **una riga per persona** invece che una per
+assegnazione (chi ha 3 servizi non compariva 3 volte) — click sulla riga
+per espanderla e vedere le stesse ore suddivise per commessa e per
+servizio (`PersonHoursTable.tsx`, client component: l'espansione è
+interattiva, niente di nuovo dal database). Il "peggior alert" della persona (per gravità — `severityOf()`, la stessa
+mappatura già usata per colorare gli AlertChip ovunque nell'app) resta
+visibile sulla riga di riepilogo.
+
 ## Modifica ODA — aggiungere un servizio a un ordine esistente
 
 Richiesta dall'utente: un ordine può coprire più servizi (es. LEED e CRREM

@@ -5,6 +5,17 @@ import { db } from "@/lib/db";
 // qui includiamo anche sospesi e in certificazione, non solo attivi, perché
 // lo scopo è verificare lo stato reale, non solo il portfolio corrente).
 
+/** Riepilogo per commessa (richiesto dall'utente) — somma dei servizi non
+ * chiusi, vedi v_commessa_hours_metrics per le formule (media pesata sulle
+ * ore stimate per phase_progress_pct, non una media delle medie). */
+export function getCommesseHoursControl() {
+  return db
+    .selectFrom("vCommessaHoursMetrics")
+    .selectAll()
+    .orderBy("hoursVariance", "desc")
+    .execute();
+}
+
 export function getServicesHoursControl() {
   return db
     .selectFrom("vServiceMetrics as sm")
@@ -38,6 +49,7 @@ export function getAssignmentsHoursControl() {
     .innerJoin("commessa as c", "c.id", "s.commessaId")
     .select([
       "a.assignmentId",
+      "p.id as personId",
       "p.name as personName",
       "s.code as serviceCode",
       "c.code as commessaCode",

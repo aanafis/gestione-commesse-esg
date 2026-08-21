@@ -350,6 +350,21 @@ export interface VBillingMilestoneStatus {
   type: MilestoneType | null;
 }
 
+export interface VCommessaHoursMetrics {
+  actualHours: Numeric | null;
+  code: string | null;
+  commessaId: Int8 | null;
+  eacHours: Numeric | null;
+  estimatedHours: Numeric | null;
+  etcHours: Numeric | null;
+  hoursConsumedPct: Numeric | null;
+  hoursMargin: Numeric | null;
+  hoursProgressGap: Numeric | null;
+  hoursVariance: Numeric | null;
+  phaseProgressPct: Numeric | null;
+  servicesCount: Int8 | null;
+}
+
 export interface VCommessaMetrics {
   clientId: Int8 | null;
   code: string | null;
@@ -546,6 +561,7 @@ export interface DB {
   timeEntry: TimeEntry;
   vAssignmentMetrics: VAssignmentMetrics;
   vBillingMilestoneStatus: VBillingMilestoneStatus;
+  vCommessaHoursMetrics: VCommessaHoursMetrics;
   vCommessaMetrics: VCommessaMetrics;
   vDashboardBilling: VDashboardBilling;
   vDashboardByServiceType: VDashboardByServiceType;
