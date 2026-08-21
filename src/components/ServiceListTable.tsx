@@ -120,13 +120,14 @@ export function ServiceListTable({ rows }: { rows: ServiceListRow[] }) {
 
   function exportCsv() {
     const headers = [
-      "Servizio", "Commessa", "Cliente", "Tipo", "Variante", "PM", "Stato", "Alert",
+      "Servizio", "Commessa", "Cliente", "Asset", "Tipo", "Variante", "PM", "Stato", "Alert",
       "Margine %", "Sconto %", "Scostamento ore", "Prezzo contrattualizzato",
     ];
     const csvRows = filtered.map((r) => [
       r.code,
       r.commessaCode,
       r.clientName,
+      r.assetName ?? "",
       r.serviceTypeName,
       r.variant ?? "",
       r.pmName ?? "",
@@ -175,6 +176,7 @@ export function ServiceListTable({ rows }: { rows: ServiceListRow[] }) {
               <th className="px-4 py-2 font-medium">Servizio</th>
               <th className="px-4 py-2 font-medium">Commessa</th>
               <th className="px-4 py-2 font-medium">Cliente</th>
+              <th className="px-4 py-2 font-medium">Asset</th>
               <th className="px-4 py-2 font-medium">Tipo</th>
               <th className="px-4 py-2 font-medium">Variante</th>
               <th className="px-4 py-2 font-medium">PM</th>
@@ -204,7 +206,7 @@ export function ServiceListTable({ rows }: { rows: ServiceListRow[] }) {
           <tbody className="[font-variant-numeric:tabular-nums]">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={12} className="px-4 py-6 text-center text-sm text-ink-muted">
+                <td colSpan={13} className="px-4 py-6 text-center text-sm text-ink-muted">
                   Nessun servizio corrisponde ai filtri scelti.
                 </td>
               </tr>
@@ -218,6 +220,7 @@ export function ServiceListTable({ rows }: { rows: ServiceListRow[] }) {
                   </td>
                   <td className="px-4 py-2 text-ink-secondary">{r.commessaCode}</td>
                   <td className="px-4 py-2 text-ink-secondary">{r.clientName}</td>
+                  <td className="px-4 py-2 text-ink-secondary">{r.assetName ?? "–"}</td>
                   <td className="px-4 py-2 text-ink-secondary">{r.serviceTypeName}</td>
                   <td className="px-4 py-2 text-ink-secondary">{r.variant ?? "–"}</td>
                   <td className="px-4 py-2 text-ink-secondary">{r.pmName ?? "–"}</td>

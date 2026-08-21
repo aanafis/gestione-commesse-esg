@@ -84,6 +84,8 @@ export default async function ControlloOrePage() {
           emptyLabel="Nessuna commessa con servizi non chiusi."
           columns={[
             { key: "code", label: "Commessa" },
+            { key: "clientName", label: "Cliente" },
+            { key: "assetName", label: "Asset", render: (r) => r.assetName ?? "–" },
             { key: "servicesCount", label: "N. servizi", align: "right" },
             { key: "estimatedHours", label: "Stimate", align: "right", render: (r) => formatHours(r.estimatedHours) },
             { key: "actualHours", label: "Consuntivo", align: "right", render: (r) => formatHours(r.actualHours) },
@@ -134,6 +136,9 @@ export default async function ControlloOrePage() {
               ),
             },
             { key: "commessaCode", label: "Commessa" },
+            { key: "clientName", label: "Cliente" },
+            { key: "assetName", label: "Asset", render: (r) => r.assetName ?? "–" },
+            { key: "serviceTypeName", label: "Tipo" },
             { key: "estimatedHours", label: "Stimate", align: "right", render: (r) => formatHours(r.estimatedHours) },
             { key: "actualHours", label: "Consuntivo", align: "right", render: (r) => formatHours(r.actualHours) },
             { key: "hoursConsumedPct", label: "Consumate %", align: "right", render: (r) => formatPercent(r.hoursConsumedPct) },

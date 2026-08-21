@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useState, type ReactNode } from "react";
 import { AlertChip } from "@/components/AlertChip";
 import { severityOf, type Severity } from "@/lib/alert";
 import { formatHours, formatPercent } from "@/lib/format";
@@ -21,6 +21,9 @@ type AssignmentRow = {
   personName: string | null;
   serviceCode: string;
   commessaCode: string;
+  clientName: string;
+  assetName: string | null;
+  serviceTypeName: string;
   estimatedHours: string | null;
   actualHours: string | null;
   etcHours: string | null;
@@ -128,9 +131,16 @@ export function PersonHoursTable({ rows }: { rows: AssignmentRow[] }) {
                             Per commessa
                           </h4>
                           <DetailTable
+                            descriptiveColumns={[
+                              { key: "commessaCode", label: "Commessa", render: (r) => r.commessaCode },
+                              { key: "clientName", label: "Cliente", render: (r) => r.clientName },
+                              { key: "assetName", label: "Asset", render: (r) => r.assetName ?? "–" },
+                            ]}
                             rows={Array.from(byCommessa.entries()).map(([commessaCode, group]) => ({
                               key: commessaCode,
-                              label: commessaCode,
+                              commessaCode,
+                              clientName: group[0].clientName,
+                              assetName: group[0].assetName,
                               estimatedHours: sum(group, "estimatedHours"),
                               actualHours: sum(group, "actualHours"),
                               eacHours: sum(group, "eacHours"),
@@ -143,9 +153,20 @@ export function PersonHoursTable({ rows }: { rows: AssignmentRow[] }) {
                             Per servizio
                           </h4>
                           <DetailTable
+                            descriptiveColumns={[
+                              { key: "serviceCode", label: "Servizio", render: (r) => r.serviceCode },
+                              { key: "commessaCode", label: "Commessa", render: (r) => r.commessaCode },
+                              { key: "clientName", label: "Cliente", render: (r) => r.clientName },
+                              { key: "assetName", label: "Asset", render: (r) => r.assetName ?? "–" },
+                              { key: "serviceTypeName", label: "Tipo", render: (r) => r.serviceTypeName },
+                            ]}
                             rows={p.rows.map((r) => ({
                               key: r.assignmentId ?? `${r.serviceCode}-${r.commessaCode}`,
-                              label: `${r.serviceCode} (${r.commessaCode})`,
+                              serviceCode: r.serviceCode,
+                              commessaCode: r.commessaCode,
+                              clientName: r.clientName,
+                              assetName: r.assetName,
+                              serviceTypeName: r.serviceTypeName,
                               estimatedHours: Number(r.estimatedHours),
                               actualHours: Number(r.actualHours),
                               eacHours: Number(r.eacHours),
@@ -166,17 +187,29 @@ export function PersonHoursTable({ rows }: { rows: AssignmentRow[] }) {
   );
 }
 
-function DetailTable({
+// Colonne descrittive (Commessa/Cliente/Asset/Tipo) parametrizzate perché la
+// mini-tabella "Per commessa" ne mostra tre e quella "Per servizio" cinque —
+// stessa richiesta dell'utente di affiancare Cliente/Asset/Tipo ovunque
+// compaia un codice servizio o commessa, applicata anche qui.
+type HoursTotals = { key: string; estimatedHours: number; actualHours: number; eacHours: number; variance: number };
+
+function DetailTable<T extends HoursTotals>({
   rows,
+  descriptiveColumns,
 }: {
-  rows: { key: string; label: string; estimatedHours: number; actualHours: number; eacHours: number; variance: number }[];
+  rows: T[];
+  descriptiveColumns: { key: string; label: string; render: (r: T) => ReactNode }[];
 }) {
   return (
     <div className="overflow-hidden rounded-md border border-border bg-surface">
       <table className="w-full text-xs">
         <thead>
           <tr className="border-b border-gridline text-left text-ink-secondary">
-            <th className="px-3 py-1.5 font-medium">&nbsp;</th>
+            {descriptiveColumns.map((c) => (
+              <th key={c.key} className="px-3 py-1.5 font-medium">
+                {c.label}
+              </th>
+            ))}
             <th className="px-3 py-1.5 text-right font-medium">Stimate</th>
             <th className="px-3 py-1.5 text-right font-medium">Consuntivo</th>
             <th className="px-3 py-1.5 text-right font-medium">EAC</th>
@@ -186,7 +219,11 @@ function DetailTable({
         <tbody className="[font-variant-numeric:tabular-nums]">
           {rows.map((r) => (
             <tr key={r.key} className="border-b border-gridline last:border-0">
-              <td className="px-3 py-1.5 text-ink-primary">{r.label}</td>
+              {descriptiveColumns.map((c) => (
+                <td key={c.key} className="px-3 py-1.5 text-ink-primary">
+                  {c.render(r)}
+                </td>
+              ))}
               <td className="px-3 py-1.5 text-right text-ink-secondary">{formatHours(r.estimatedHours)}</td>
               <td className="px-3 py-1.5 text-right text-ink-secondary">{formatHours(r.actualHours)}</td>
               <td className="px-3 py-1.5 text-right text-ink-secondary">{formatHours(r.eacHours)}</td>

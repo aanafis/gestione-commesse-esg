@@ -7,12 +7,31 @@ import { db } from "@/lib/db";
 
 /** Riepilogo per commessa (richiesto dall'utente) — somma dei servizi non
  * chiusi, vedi v_commessa_hours_metrics per le formule (media pesata sulle
- * ore stimate per phase_progress_pct, non una media delle medie). */
+ * ore stimate per phase_progress_pct, non una media delle medie). Cliente e
+ * Asset joinati qui (non nella vista, che riguarda solo le ore) — stesso
+ * pattern di getServiceList in service-list.ts. */
 export function getCommesseHoursControl() {
   return db
-    .selectFrom("vCommessaHoursMetrics")
-    .selectAll()
-    .orderBy("hoursVariance", "desc")
+    .selectFrom("vCommessaHoursMetrics as m")
+    .innerJoin("commessa as c", "c.id", "m.commessaId")
+    .innerJoin("client as cl", "cl.id", "c.clientId")
+    .select([
+      "m.commessaId",
+      "m.code",
+      "cl.name as clientName",
+      "c.assetName",
+      "m.servicesCount",
+      "m.estimatedHours",
+      "m.actualHours",
+      "m.hoursConsumedPct",
+      "m.phaseProgressPct",
+      "m.hoursProgressGap",
+      "m.etcHours",
+      "m.eacHours",
+      "m.hoursVariance",
+      "m.hoursMargin",
+    ])
+    .orderBy("m.hoursVariance", "desc")
     .execute();
 }
 
@@ -21,10 +40,15 @@ export function getServicesHoursControl() {
     .selectFrom("vServiceMetrics as sm")
     .innerJoin("service as s", "s.id", "sm.serviceId")
     .innerJoin("commessa as c", "c.id", "sm.commessaId")
+    .innerJoin("client as cl", "cl.id", "c.clientId")
+    .innerJoin("serviceType as st", "st.id", "sm.serviceTypeId")
     .select([
       "sm.serviceId",
       "s.code",
       "c.code as commessaCode",
+      "cl.name as clientName",
+      "c.assetName",
+      "st.name as serviceTypeName",
       "sm.status",
       "sm.estimatedHours",
       "sm.actualHours",
@@ -47,12 +71,17 @@ export function getAssignmentsHoursControl() {
     .innerJoin("person as p", "p.id", "a.personId")
     .innerJoin("service as s", "s.id", "a.serviceId")
     .innerJoin("commessa as c", "c.id", "s.commessaId")
+    .innerJoin("client as cl", "cl.id", "c.clientId")
+    .innerJoin("serviceType as st", "st.id", "s.serviceTypeId")
     .select([
       "a.assignmentId",
       "p.id as personId",
       "p.name as personName",
       "s.code as serviceCode",
       "c.code as commessaCode",
+      "cl.name as clientName",
+      "c.assetName",
+      "st.name as serviceTypeName",
       "a.estimatedHours",
       "a.actualHours",
       "a.etcHours",

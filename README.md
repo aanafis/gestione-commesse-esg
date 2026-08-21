@@ -128,6 +128,42 @@ Limite Server Action alzato da 1MB (default Next.js) a 10MB in
 oltre 8MB, con un margine sotto il limite per l'overhead di
 multipart/form-data.
 
+## Cliente/Asset/Tipo affiancati a ogni codice servizio/commessa
+
+Richiesta dall'utente: in ogni tabella dell'app, ovunque compaia un codice
+**servizio**, mostrare di fianco anche **Cliente**, **Asset** e **Tipo**
+(servizio); ovunque compaia solo un codice **commessa**, mostrare **Cliente**
+e **Asset**. Se in una stessa tabella compaiono entrambi i codici, si tratta
+come il caso "servizio" (i tre campi si mostrano una volta sola, non
+duplicati per commessa e poi per servizio).
+
+Tabelle toccate (tutte le query estese con `JOIN` a `client`/`serviceType`,
+stesso pattern già usato da `getServiceList`/`getCommessaList` — nessuna
+vista nuova, sono join di sola presentazione):
+
+- **Servizi** (`ServiceListTable`) — aveva già Cliente e Tipo, aggiunto Asset.
+- **Commesse** (`CommessaListTable`) — aveva già Cliente e Asset, nessuna
+  modifica (non mostra un codice servizio, quindi niente Tipo).
+- **Controllo ore** — "Per commessa" (Cliente, Asset), "Per servizio"
+  (Cliente, Asset, Tipo), e le due mini-tabelle che si aprono espandendo una
+  riga di "Per persona" (`PersonHoursTable`, per commessa: Cliente/Asset; per
+  servizio: Cliente/Asset/Tipo) — `DetailTable` lì dentro è stata resa
+  generica su un elenco di colonne descrittive invece di una singola colonna
+  "label", proprio per poter aggiungere queste colonne senza duplicare la
+  tabella due volte.
+- **Scheda fornitore** — tabella "Ordini di acquisto" (Cliente, Asset, Tipo).
+- **Cruscotto** — "Servizi in attenzione" non è una tabella ma un elenco di
+  card; Cliente/Asset/Tipo sono stati aggiunti come riga secondaria sotto il
+  codice commessa invece di tre colonne, per non appesantire un widget
+  pensato per essere scorso a colpo d'occhio.
+
+Fuori perimetro (per istruzione esplicita, o perché non pertinente): i tab
+della Scheda servizio (Assegnazioni/Fasi/SAL/ODA/Ore/Previsioni) — il
+servizio è già indicato una volta nell'intestazione della pagina, ripeterlo
+riga per riga sarebbe rumore; le tendine di selezione servizio/commessa nei
+form di inserimento; le anagrafiche admin (clienti, persone, tipi di
+servizio, template fasi, livelli), che non elencano servizi o commesse.
+
 ## Admin (§6.6)
 
 `/admin` — riservato al ruolo `admin` (verificato sia dal layout che da ogni

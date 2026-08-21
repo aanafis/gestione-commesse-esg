@@ -17,6 +17,7 @@ export function getServiceList() {
       "s.code",
       "c.code as commessaCode",
       "cl.name as clientName",
+      "c.assetName",
       "st.name as serviceTypeName",
       "s.variant",
       "pm.name as pmName",

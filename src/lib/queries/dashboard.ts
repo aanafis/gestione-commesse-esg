@@ -53,10 +53,15 @@ export async function getActiveServiceAlerts() {
     .innerJoin("vServiceAlert as sa", "sa.serviceId", "sm.serviceId")
     .innerJoin("service as s", "s.id", "sm.serviceId")
     .innerJoin("commessa as c", "c.id", "sm.commessaId")
+    .innerJoin("client as cl", "cl.id", "c.clientId")
+    .innerJoin("serviceType as st", "st.id", "sm.serviceTypeId")
     .select([
       "sm.serviceId",
       "s.code",
       "c.code as commessaCode",
+      "cl.name as clientName",
+      "c.assetName",
+      "st.name as serviceTypeName",
       "sa.alert",
       "sm.marginPct",
       "sm.discountPct",

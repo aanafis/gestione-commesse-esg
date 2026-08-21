@@ -15,6 +15,8 @@ export function getSupplierPurchaseOrderLines(id: string) {
     .innerJoin("purchaseOrder as po", "po.id", "l.purchaseOrderId")
     .innerJoin("service as s", "s.id", "l.serviceId")
     .innerJoin("commessa as c", "c.id", "s.commessaId")
+    .innerJoin("client as cl", "cl.id", "c.clientId")
+    .innerJoin("serviceType as st", "st.id", "s.serviceTypeId")
     .select([
       "l.lineId",
       "po.id as purchaseOrderId",
@@ -26,6 +28,9 @@ export function getSupplierPurchaseOrderLines(id: string) {
       "s.id as serviceId",
       "s.code as serviceCode",
       "c.code as commessaCode",
+      "cl.name as clientName",
+      "c.assetName",
+      "st.name as serviceTypeName",
       "l.phaseRef",
       "l.consultantCost",
       "l.rechargedToClient",

@@ -21,6 +21,9 @@ export function AttentionList({
     serviceId: string | null;
     code: string | null;
     commessaCode: string | null;
+    clientName: string | null;
+    assetName: string | null;
+    serviceTypeName: string | null;
     alert: string | null;
     marginPct: string | null;
     discountPct: string | null;
@@ -43,7 +46,9 @@ export function AttentionList({
           >
             <div className="flex min-w-0 flex-col">
               <span className="text-sm font-medium text-ink-primary">{a.code}</span>
-              <span className="text-xs text-ink-muted">Commessa {a.commessaCode}</span>
+              <span className="text-xs text-ink-muted">
+                Commessa {a.commessaCode} · {a.clientName} · {a.assetName ?? "–"} · {a.serviceTypeName}
+              </span>
             </div>
             <div className="flex flex-none items-center gap-3">
               {showMargin && (
